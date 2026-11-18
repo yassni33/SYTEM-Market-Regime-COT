@@ -13,23 +13,55 @@ type Content = {
   checklist: string[];
 };
 
-// Contenu de départ : des cadres à remplir, pas des règles inventées.
+// Contenu de départ : la stratégie ACR de Yassni. Modifiable depuis la page (enregistré dans Supabase).
 const DEFAULT: Content = {
-  rules:
-    "Écris ici tes règles ACR, une par ligne.\nExemple de structure :\n1. Contexte : biais de la semaine (note A ou B sur la page Market Regime).\n2. Zone : …\n3. Déclencheur d’entrée : …\n4. Stop loss : …\n5. Take profit : …\n6. Gestion du trade : …",
-  tc: "Explique ici ce qu’est le TC dans ta méthode : définition, comment le repérer sur le graphique, sur quelle unité de temps, et ce qui l’invalide.",
-  examples: "Décris ici tes trades modèles (date, marché, ce qui a validé chaque règle). Ajoute les captures dans le journal et note leur date ici.",
-  backtestNote: "Période, marchés et règles exactes utilisées pour le backtest.",
-  backtest: [],
+  rules: [
+    "1. Tendance du jour : je la choisis avant la séance. Haussière = achats seulement. Baissière = ventes seulement.",
+    "",
+    "2. Range Asie : de 20h00 à 00h00 heure de New York. Son plus haut et son plus bas = la liquidité.",
+    "",
+    "3. Sweep : entre 02h00 et 09h00 NY, une bougie H1 passe au-delà du haut ou du bas de l’Asie. J’attends que cette bougie H1 soit terminée, peu importe où elle clôture.",
+    "",
+    "4. TC en M5 : je trace la ligne TC (voir l’explication plus bas). Le TC est validé seulement si le CORPS d’une bougie M5 clôture au-delà de la ligne, avant 09h30 NY.",
+    "",
+    "5. Entrée : à la clôture de la bougie M5 qui valide le TC.",
+    "   • Stop loss : au-delà de l’extrême du sweep, + 5 ticks.",
+    "   • Take profit : ratio fixe.",
+    "",
+    "Gestion du risque",
+    "   • Risque 1 % maximum par trade.",
+    "   • 2 trades maximum par jour.",
+    "   • Pas d’entrée juste avant une grosse news.",
+    "   • Si je casse une règle, j’arrête pour la journée.",
+  ].join("\n"),
+  tc: [
+    "Le TC se trace en M5, après le sweep de l’Asie.",
+    "",
+    "• Pour un achat (le bas de l’Asie a été pris) : la ligne TC est le dernier sommet d’où est partie la descente qui a pris le bas de l’Asie.",
+    "• Pour une vente (le haut de l’Asie a été pris) : la ligne TC est le dernier creux d’où est partie la montée qui a pris le haut de l’Asie.",
+    "",
+    "Validation : le CORPS d’une bougie M5 doit clôturer au-delà de la ligne TC. Une simple mèche ne compte pas.",
+    "Limite de temps : la validation doit arriver avant 09h30 NY. Après, pas de trade.",
+  ].join("\n"),
+  examples:
+    "Décris ici tes trades modèles (date, marché, ce qui a validé chaque règle). Ajoute les captures dans le journal et note leur date ici.",
+  backtestNote:
+    "Données Dukascopy 2023-2024. Règles appliquées automatiquement, SANS le filtre de tendance du jour (règle 1). TP en ratio 1:1. Nombre de gagnants arrondi à partir du % gagnants.",
+  backtest: [
+    { periode: "2023-2024", marche: "EURUSD", trades: "473", gagnants: "246", rr: "1:1", resultat: "−6,5 R" },
+    { periode: "2023-2024", marche: "GBPUSD", trades: "480", gagnants: "230", rr: "1:1", resultat: "−36 R" },
+  ],
   code: "// Colle ici le code Pine Script de ton indicateur ACR pour TradingView.\n//@version=5\nindicator(\"ACR\", overlay = true)\n",
   checklist: [
-    "Le marché a une note A ou B dans le sens de mon trade",
-    "Pas de news forte dans les 30 minutes (page Calendrier des news)",
-    "Toutes mes règles ACR sont validées",
-    "Le TC est clairement identifié",
-    "Stop loss et take profit placés avant l’entrée",
-    "Risque calculé : 1 % maximum (Calculateur de risque)",
-    "Je suis calme, sans envie de me refaire",
+    "Tendance du jour définie : je trade seulement dans son sens",
+    "Range Asie (20h00–00h00 NY) tracé : haut et bas marqués",
+    "Sweep : une bougie H1 a dépassé le haut ou le bas de l’Asie entre 02h00 et 09h00 NY, et elle est terminée",
+    "Ligne TC tracée en M5 (dernier sommet ou creux d’où est parti le sweep)",
+    "Le CORPS d’une bougie M5 a clôturé au-delà du TC, avant 09h30 NY",
+    "SL au-delà de l’extrême du sweep (+ 5 ticks), TP en ratio fixe",
+    "Risque 1 % maximum, lot calculé (Calculateur de risque)",
+    "Moins de 2 trades aujourd’hui et aucune règle cassée aujourd’hui",
+    "Pas de grosse news juste avant l’entrée (Calendrier des news)",
   ],
 };
 
@@ -228,7 +260,7 @@ export default function StrategyPage() {
               className="btn btn-sm"
               onClick={() => navigator.clipboard.writeText(c.code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {})}
             >
-              {copied ? "Copié" : "Copier le code"}
+              {copied ? "Copié !" : "Copier"}
             </button>
           )}
         </div>
