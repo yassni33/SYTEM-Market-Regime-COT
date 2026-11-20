@@ -107,11 +107,11 @@ export default function JournalDashboard() {
         <Movements j={j} onEdit={(t) => setTxForm(t)} />
       ) : (
       <>
-      <div className="grid g3">
+      <div className="grid g3 kpis">
         {kpis.map((k) => (
           <div key={k.label} className="card card-b">
             <div className="label">{k.label}</div>
-            <div className={`num ${k.tone ?? ""}`} style={{ fontSize: 24, fontWeight: 600, marginTop: 4 }}>{j.loading ? "…" : k.value}</div>
+            <div className={`num kpi-value ${k.tone ?? ""}`}>{j.loading ? "…" : k.value}</div>
             {k.sub && <div className="small muted">{k.sub}</div>}
           </div>
         ))}

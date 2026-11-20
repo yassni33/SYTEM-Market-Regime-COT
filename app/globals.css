@@ -32,6 +32,11 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+/* Safety net: nothing may widen the page (a wider page makes iOS Safari zoom out).
+   "clip" (modern browsers) cuts the overflow without creating a scroll container,
+   so the sticky menu keeps working; older browsers fall back to "hidden". */
+html, body { overflow-x: hidden; }
+@supports (overflow: clip) { html, body { overflow-x: clip; } }
 body {
   background: var(--bg);
   color: var(--text);
@@ -113,16 +118,26 @@ img { max-width: 100%; }
     min-width: 0;
   }
   .brand { padding: 0 16px; }
+  /* The top menu scrolls sideways inside its own strip and never widens the page */
+  .sidebar > *, .brand > * { min-width: 0; max-width: 100%; }
   .nav {
-    flex-direction: row; overflow-x: auto; padding: 0 12px 8px; gap: 4px;
-    scrollbar-width: none;
+    flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 0 12px 8px; gap: 4px;
+    white-space: nowrap; width: 100%; max-width: 100%; min-width: 0;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
   }
   .nav::-webkit-scrollbar { display: none; }
-  .nav a, .nav a.sub { white-space: nowrap; padding: 6px 10px; font-size: 13px; }
+  .nav a, .nav a.sub { white-space: nowrap; padding: 6px 10px; font-size: 13px; flex: none; }
   .nav-group { display: none; }
   .nav svg { display: none; }
   .sidebar .sidebar-foot { display: none; }
   .main { padding: 16px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
+
+  /* Flex/grid children that hold text, tables or controls may shrink to the screen width */
+  .shell > *, .main > *, .stack > *, .row > *, .grid > *, .page-head > *, .card-h > *,
+  .card-b > *, .form-grid > *, .field { min-width: 0; }
+  .page-head > * { max-width: 100%; }
+  /* Tables and the P&L calendar scroll sideways inside their own box */
+  .tbl-wrap { max-width: 100%; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 }
 
 /* ---------- Cards and grids ---------- */
@@ -216,6 +231,16 @@ textarea.input { resize: vertical; min-height: 72px; }
 .input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 .form-grid .wide { grid-column: 1 / -1; }
+
+/* ---------- Stat cards ---------- */
+.kpi-value { font-size: 24px; font-weight: 600; margin-top: 4px; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  /* 2 stat cards per row on phones so the dashboard is shorter */
+  .grid.kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpis .card-b { padding: 12px; }
+  .kpis .kpi-value { font-size: 18px; }
+  .kpis .label { font-size: 10px; letter-spacing: 0.04em; }
+}
 
 /* ---------- Tables ---------- */
 .tbl-wrap { overflow-x: auto; }

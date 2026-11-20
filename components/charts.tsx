@@ -1,6 +1,6 @@
 "use client";
 // Small hand-made SVG charts (no library): line, bars, radar, sparkline. Colors come from the CSS variables.
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 export const SERIES = ["var(--accent)", "var(--series-2)"]; // blue + pink, validated for color blindness on the dark cards
 const GRID = "var(--line)";
@@ -10,16 +10,20 @@ const DOWN = "var(--down)";
 const MARK = "var(--text)"; // markers (withdrawals): text ink, distinct from series and status colors
 const RING = "var(--card)"; // surface-colored ring around points
 
+// Width of the chart's box, measured before the first paint. It starts at 0 so a chart never
+// draws wider than its container (a too-wide first frame makes iOS Safari zoom the whole page out).
+// A callback ref re-measures whenever the box appears (e.g. after an empty state).
 function useWidth<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [w, setW] = useState(600);
-  useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.max(200, Math.floor(e.contentRect.width))));
-    ro.observe(ref.current);
+  const [el, setEl] = useState<T | null>(null);
+  const [w, setW] = useState(0);
+  useLayoutEffect(() => {
+    if (!el) return;
+    setW(Math.floor(el.clientWidth));
+    const ro = new ResizeObserver(([e]) => setW(Math.floor(e.contentRect.width)));
+    ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-  return [ref, w] as const;
+  }, [el]);
+  return [setEl, w] as const;
 }
 
 function niceTicks(min: number, max: number, count = 4) {
@@ -137,7 +141,8 @@ export function LineChart({
         };
 
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+    <div ref={ref} style={{ position: "relative", width: "100%", minHeight: height, overflowX: "clip" }}>
+      {w > 0 && (
       <svg width={w} height={height} role="img" aria-label={series.map((s) => s.name).join(", ")} style={{ display: "block" }}>
         {ticks.map((t) => (
           <g key={t}>
@@ -186,6 +191,7 @@ export function LineChart({
         )}
         <rect x={L} y={T} width={iw} height={ih} fill="transparent" onPointerMove={move} onPointerLeave={() => setHover(null)} />
       </svg>
+      )}
       <Tooltip tip={tip} />
     </div>
   );
@@ -232,7 +238,8 @@ export function BarChart({
           ),
         };
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+    <div ref={ref} style={{ position: "relative", width: "100%", minHeight: height, overflowX: "clip" }}>
+      {w > 0 && (
       <svg width={w} height={height} role="img" aria-label="Bar chart" style={{ display: "block" }}>
         {ticks.map((t) => (
           <g key={t}>
@@ -265,6 +272,7 @@ export function BarChart({
           ) : null,
         )}
       </svg>
+      )}
       <Tooltip tip={tip} />
     </div>
   );
