@@ -7,6 +7,7 @@ const GRID = "#E2E7EC";
 const INK = "#677480";
 const UP = "#12955A";
 const DOWN = "#D23C48";
+const MARK = "#15202B"; // repères (retraits) : encre du texte, distincte des séries et des statuts
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -75,6 +76,7 @@ export function LineChart({
   formatLabel = (s: string) => s,
   zeroLine = true,
   area = false,
+  markers = [],
 }: {
   labels: string[];
   series: { name: string; data: number[]; color: string }[];
@@ -83,6 +85,8 @@ export function LineChart({
   formatLabel?: (s: string) => string;
   zeroLine?: boolean;
   area?: boolean;
+  // Petits repères posés sur la 1re série (ex. retraits sur la courbe d'équité)
+  markers?: { index: number; label: string }[];
 }) {
   const [ref, w] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
@@ -121,6 +125,12 @@ export function LineChart({
                   <b className="num">{format(s.data[hover])}</b>
                 </div>
               ))}
+              {markers.filter((m) => m.index === hover).map((m, k) => (
+                <div key={k} style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 2 }}>
+                  <span style={{ fontSize: 9 }}>▼</span>
+                  <span>{m.label}</span>
+                </div>
+              ))}
             </div>
           ),
         };
@@ -149,6 +159,22 @@ export function LineChart({
             </g>
           );
         })}
+        {series[0] &&
+          markers.map((m, k) => {
+            if (m.index < 0 || m.index >= n) return null;
+            const cx = x(m.index);
+            const tip = Math.max(T + 8, y(series[0].data[m.index]) - 7);
+            return (
+              <path
+                key={k}
+                d={`M${cx - 5},${tip - 8}L${cx + 5},${tip - 8}L${cx},${tip}Z`}
+                fill={MARK}
+                stroke="#fff"
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+              />
+            );
+          })}
         {hover != null && (
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={T} y2={T + ih} stroke={INK} strokeWidth={1} opacity={0.4} />

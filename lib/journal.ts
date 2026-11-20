@@ -158,3 +158,54 @@ export function computeStats(trades: Trade[], initialBalance: number) {
     edge,
   };
 }
+
+// ---------- Retraits, dépôts, payouts ----------
+// Ces mouvements changent le solde du compte, jamais les stats de trading.
+
+export type Transaction = {
+  id: string;
+  account_id: string;
+  type: "withdrawal" | "deposit" | "payout";
+  amount: number; // toujours positif
+  date: string; // AAAA-MM-JJ
+  note: string | null;
+};
+
+export const TX_TYPES: Record<Transaction["type"], string> = {
+  withdrawal: "Retrait",
+  deposit: "Dépôt",
+  payout: "Payout",
+};
+
+// Sortie d'argent du compte (retrait ou payout de prop firm)
+export const isOutflow = (t: Transaction) => t.type !== "deposit";
+
+export type Cashflow = {
+  initial: number;
+  deposits: number;
+  withdrawals: number;
+  payouts: number;
+  tradePnl: number;
+  balance: number; // départ + dépôts − retraits − payouts + P&L trades
+  totalWithdrawn: number; // retraits + payouts : l'argent réellement sorti
+  returnPct: number | null; // P&L trades / (départ + dépôts)
+};
+
+export function computeCashflow(initial: number, trades: Trade[], txs: Transaction[]): Cashflow {
+  const sum = (type: Transaction["type"]) => txs.filter((t) => t.type === type).reduce((s, t) => s + t.amount, 0);
+  const deposits = sum("deposit");
+  const withdrawals = sum("withdrawal");
+  const payouts = sum("payout");
+  const tradePnl = trades.reduce((s, t) => s + t.pnl, 0);
+  const capital = initial + deposits;
+  return {
+    initial,
+    deposits,
+    withdrawals,
+    payouts,
+    tradePnl,
+    balance: initial + deposits - withdrawals - payouts + tradePnl,
+    totalWithdrawn: withdrawals + payouts,
+    returnPct: capital > 0 ? (tradePnl / capital) * 100 : null,
+  };
+}

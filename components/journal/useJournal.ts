@@ -1,13 +1,15 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import type { Account, Trade } from "@/lib/journal";
+import type { Account, Trade, Transaction } from "@/lib/journal";
 
 const KEY = "yth-account";
 
 export function useJournal() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txError, setTxError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accountId, setAccountIdState] = useState<string>("all");
@@ -28,10 +30,20 @@ export function useJournal() {
   const reload = useCallback(async () => {
     const sb = supabaseBrowser();
     setLoading(true);
-    const [a, t] = await Promise.all([
+    const [a, t, x] = await Promise.all([
       sb.from("accounts").select("*").order("created_at"),
       sb.from("trades").select("*").order("opened_at", { ascending: false }).limit(5000),
+      sb.from("account_transactions").select("*").order("date", { ascending: false }).order("created_at", { ascending: false }),
     ]);
+    // Erreur séparée : le reste du journal marche même si la table des mouvements n'existe pas encore.
+    setTxError(
+      x.error
+        ? x.error.code === "42P01" || /account_transactions/.test(x.error.message)
+          ? "La table des retraits et dépôts n’existe pas encore : colle le fichier supabase/2026-11-20_account_transactions.sql dans le SQL Editor de Supabase."
+          : x.error.message
+        : null,
+    );
+    setTransactions(((x.data ?? []) as Transaction[]).map((r) => ({ ...r, amount: Number(r.amount) })));
     if (a.error || t.error) setError((a.error ?? t.error)!.message);
     else setError(null);
     setAccounts(
@@ -64,6 +76,10 @@ export function useJournal() {
     () => (validId === "all" ? trades : trades.filter((t) => t.account_id === validId)),
     [trades, validId],
   );
+  const filteredTx = useMemo(
+    () => (validId === "all" ? transactions : transactions.filter((t) => t.account_id === validId)),
+    [transactions, validId],
+  );
   const initialBalance = selected.reduce((s, a) => s + a.initial_balance, 0);
   const currency = selected[0]?.currency ?? "USD";
 
@@ -71,6 +87,9 @@ export function useJournal() {
     accounts,
     trades,
     filtered,
+    transactions,
+    filteredTx,
+    txError,
     loading,
     error,
     reload,
