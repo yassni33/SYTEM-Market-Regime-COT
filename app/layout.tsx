@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: { default: "YASSNI.edge", template: "%s · YASSNI.edge" },
   applicationName: "YASSNI.edge",
   appleWebApp: { capable: true, title: "YASSNI.edge", statusBarStyle: "default" },
-  description: "Espace de trading personnel : régime de marché, COT, journal et outils.",
+  description: "Personal trading desk: market regime, COT, journal and tools.",
   robots: { index: false, follow: false },
 };
 
@@ -27,12 +27,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#F3F5F7",
+  themeColor: "#0B0E12",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

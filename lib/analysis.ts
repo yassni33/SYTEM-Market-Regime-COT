@@ -16,7 +16,7 @@ import type { MonthBar, RawCot, RawPrices } from "./sources";
 export type SignalValue = -1 | 0 | 1;
 export type Signal = { key: string; label: string; value: SignalValue; detail: string };
 export type Grade = "A" | "B" | "C" | null;
-export type Bias = "Long" | "Short" | "Neutre";
+export type Bias = "Long" | "Short" | "Neutral";
 
 export type MarketRow = {
   symbol: string;
@@ -68,7 +68,7 @@ export type Analysis = {
   };
   summary: string;
   regime: {
-    label: "RISK-ON" | "RISK-OFF" | "MIXTE";
+    label: "RISK-ON" | "RISK-OFF" | "MIXED";
     value: SignalValue;
     yes: number;
     tests: { label: string; ok: boolean; detail: string }[];
@@ -88,7 +88,7 @@ const mean = (a: number[]) => (a.length ? a.reduce((s, x) => s + x, 0) / a.lengt
 const pct = (a: number, b: number) => (a / b - 1) * 100;
 const sign = (x: number, up: number, down: number): SignalValue => (x > up ? 1 : x < down ? -1 : 0);
 const fmt = (x: number, d = 2) =>
-  x.toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtSigned = (x: number, d = 2) => (x > 0 ? "+" : "") + fmt(x, d);
 
 function addDays(iso: string, n: number) {
@@ -302,16 +302,16 @@ export function analyze(
   const dxyNow = last(dxy.closes);
   const dxy20 = dxy.closes[dxy.closes.length - 21];
   const tests = [
-    { label: "S&P 500 au-dessus de sa moyenne 20 jours", ok: last(es.closes) > sma(es.closes, 20), detail: `${dec(last(es.closes), 2)} contre ${dec(sma(es.closes, 20), 2)}` },
-    { label: "Nasdaq au-dessus de sa moyenne 20 jours", ok: last(nq.closes) > sma(nq.closes, 20), detail: `${dec(last(nq.closes), 2)} contre ${dec(sma(nq.closes, 20), 2)}` },
-    { label: "AUD/JPY au-dessus de sa moyenne 20 jours", ok: last(aj.closes) > sma(aj.closes, 20), detail: `${dec(last(aj.closes), 3)} contre ${dec(sma(aj.closes, 20), 3)}` },
-    { label: "VIX sous 20", ok: vixNow < 20, detail: `VIX à ${dec(vixNow, 2)}` },
-    { label: "VIX en baisse sur 5 jours", ok: vixNow < vix5, detail: `${dec(vix5, 2)} → ${dec(vixNow, 2)}` },
-    { label: "Dollar index en baisse sur 20 jours", ok: dxyNow < dxy20, detail: `${dec(dxy20, 2)} → ${dec(dxyNow, 2)}` },
+    { label: "S&P 500 above its 20-day average", ok: last(es.closes) > sma(es.closes, 20), detail: `${dec(last(es.closes), 2)} vs ${dec(sma(es.closes, 20), 2)}` },
+    { label: "Nasdaq above its 20-day average", ok: last(nq.closes) > sma(nq.closes, 20), detail: `${dec(last(nq.closes), 2)} vs ${dec(sma(nq.closes, 20), 2)}` },
+    { label: "AUD/JPY above its 20-day average", ok: last(aj.closes) > sma(aj.closes, 20), detail: `${dec(last(aj.closes), 3)} vs ${dec(sma(aj.closes, 20), 3)}` },
+    { label: "VIX below 20", ok: vixNow < 20, detail: `VIX at ${dec(vixNow, 2)}` },
+    { label: "VIX down over 5 days", ok: vixNow < vix5, detail: `${dec(vix5, 2)} → ${dec(vixNow, 2)}` },
+    { label: "Dollar index down over 20 days", ok: dxyNow < dxy20, detail: `${dec(dxy20, 2)} → ${dec(dxyNow, 2)}` },
   ];
   const yes = tests.filter((t) => t.ok).length;
   const regimeValue: SignalValue = yes >= 4 ? 1 : yes <= 2 ? -1 : 0;
-  const regimeLabel = regimeValue === 1 ? "RISK-ON" : regimeValue === -1 ? "RISK-OFF" : "MIXTE";
+  const regimeLabel = regimeValue === 1 ? "RISK-ON" : regimeValue === -1 ? "RISK-OFF" : "MIXED";
 
   const inter = (symbol: string, name: string, s: Series, d: number) => {
     const c = s.closes;
@@ -329,7 +329,7 @@ export function analyze(
     inter("DXY", "Dollar index", dxy, 2),
     inter("ES", "S&P 500", es, 2),
     inter("NQ", "Nasdaq 100", nq, 2),
-    inter("VIX", "VIX (peur)", vix, 2),
+    inter("VIX", "VIX (fear index)", vix, 2),
     inter("AUDJPY", "AUD/JPY", aj, 3),
     inter("EURUSD", "EUR/USD", S.fx.EURUSD, 5),
     inter("USDJPY", "USD/JPY", S.fx.USDJPY, 3),
@@ -373,16 +373,16 @@ export function analyze(
     key: "open",
     label: "Open levels",
     value: above >= 3 ? 1 : above <= 1 ? -1 : 0,
-    detail: `Au-dessus de ${above}/${known} ouvertures (semaine, mois, trimestre, année)`,
+    detail: `Above ${above}/${known} opens (week, month, quarter, year)`,
   });
   const seasonSignal = (pctUp: number | null, avg: number | null, n: number): Signal => ({
     key: "saison",
-    label: "Saisonnalité",
+    label: "Seasonality",
     value: pctUp == null ? 0 : pctUp >= 65 ? 1 : pctUp <= 35 ? -1 : 0,
     detail:
       pctUp == null
-        ? "Historique insuffisant"
-        : `Mois en hausse ${fmt(pctUp, 0)} % du temps sur ${n} ans (moy. ${fmtSigned(avg ?? 0)} %)`,
+        ? "Not enough history"
+        : `Month closed up ${fmt(pctUp, 0)}% of the time over ${n} years (avg ${fmtSigned(avg ?? 0)}%)`,
   });
 
   const markets: MarketRow[] = [];
@@ -400,9 +400,9 @@ export function analyze(
     const signals: Signal[] = [
       {
         key: "force",
-        label: "Force",
+        label: "Strength",
         value: sign(sDiff, 0.15, -0.15),
-        detail: `${pp.base} ${fmt(st[pp.base].score, 1)}/10 contre ${pp.quote} ${fmt(st[pp.quote].score, 1)}/10 (écart ${fmtSigned(sDiff)} %)`,
+        detail: `${pp.base} ${fmt(st[pp.base].score, 1)}/10 vs ${pp.quote} ${fmt(st[pp.quote].score, 1)}/10 (gap ${fmtSigned(sDiff)}%)`,
       },
       {
         key: "cot",
@@ -410,8 +410,8 @@ export function analyze(
         value: cotDiff == null ? 0 : sign(cotDiff, 25, -25),
         detail:
           cotDiff == null
-            ? "COT indisponible"
-            : `Commerciaux 3 ans : ${pp.base} ${fmt(cb!, 0)} − ${pp.quote} ${fmt(cq!, 0)} = ${fmtSigned(cotDiff, 0)}`,
+            ? "COT unavailable"
+            : `Commercials 3y: ${pp.base} ${fmt(cb!, 0)} − ${pp.quote} ${fmt(cq!, 0)} = ${fmtSigned(cotDiff, 0)}`,
       },
       openSignal(op.above, op.known),
       seasonSignal(cm.pct, cm.avg, cm.n),
@@ -419,7 +419,7 @@ export function analyze(
         key: "macro",
         label: "Macro",
         value: sign(macroVal, 0.4, -0.4),
-        detail: `Bêta ${fmtSigned(RISK_BETA[pp.base] - RISK_BETA[pp.quote], 1)} × régime ${regimeTxt} = ${fmtSigned(macroVal, 1)}`,
+        detail: `Beta ${fmtSigned(RISK_BETA[pp.base] - RISK_BETA[pp.quote], 1)} × ${regimeTxt} regime = ${fmtSigned(macroVal, 1)}`,
       },
     ];
     const total = signals.reduce((a, x) => a + x.value, 0);
@@ -435,7 +435,7 @@ export function analyze(
       ch1w: pct(price, s.closes[s.closes.length - 6]),
       signals,
       total,
-      bias: total > 0 ? "Long" : total < 0 ? "Short" : "Neutre",
+      bias: total > 0 ? "Long" : total < 0 ? "Short" : "Neutral",
       grade: gradeOf(total),
       nr: nrTest(s),
       opensAbove: op.above,
@@ -462,16 +462,16 @@ export function analyze(
         key: "cot",
         label: "COT",
         value: ci == null ? 0 : ci >= 70 ? 1 : ci <= 30 ? -1 : 0,
-        detail: ci == null ? "COT indisponible" : `Index commerciaux 3 ans : ${fmt(ci, 0)}`,
+        detail: ci == null ? "COT unavailable" : `Commercials index 3y: ${fmt(ci, 0)}`,
       },
       openSignal(op.above, op.known),
       seasonSignal(cm.pct, cm.avg, cm.n),
-      { key: "macro", label: "Macro", value: regimeValue, detail: `Régime ${regimeTxt}` },
+      { key: "macro", label: "Macro", value: regimeValue, detail: `${regimeLabel} regime` },
       {
         key: "tendance",
-        label: "Tendance",
+        label: "Trend",
         value: price > ma ? 1 : price < ma ? -1 : 0,
-        detail: `Prix ${price > ma ? "au-dessus" : "en dessous"} de la moyenne 20 jours (${fmt(ma, 2)})`,
+        detail: `Price ${price > ma ? "above" : "below"} its 20-day average (${fmt(ma, 2)})`,
       },
     ];
     const total = signals.reduce((a, x) => a + x.value, 0);
@@ -485,7 +485,7 @@ export function analyze(
       ch1w: pct(price, s.closes[s.closes.length - 6]),
       signals,
       total,
-      bias: total > 0 ? "Long" : total < 0 ? "Short" : "Neutre",
+      bias: total > 0 ? "Long" : total < 0 ? "Short" : "Neutral",
       grade: gradeOf(total),
       nr: nrTest(s),
       opensAbove: op.above,
@@ -514,11 +514,11 @@ export function analyze(
         Math.abs((b.strengthBase ?? 5) - (b.strengthQuote ?? 5)) - Math.abs((a.strengthBase ?? 5) - (a.strengthQuote ?? 5)),
     )[0];
   const summary =
-    `Régime ${regimeLabel} (${yes}/6 tests positifs). ` +
-    `Devise la plus forte : ${strongest.ccy} (${fmt(strongest.score, 1)}), la plus faible : ${weakest.ccy} (${fmt(weakest.score, 1)}). ` +
+    `${regimeLabel} regime (${yes}/6 tests passed). ` +
+    `Strongest currency: ${strongest.ccy} (${fmt(strongest.score, 1)}), weakest: ${weakest.ccy} (${fmt(weakest.score, 1)}). ` +
     (best
-      ? `Meilleur setup : ${best.symbol} ${best.bias} (note ${best.grade}, score ${fmtSigned(best.total, 0)}).`
-      : "Aucun setup A ou B en ce moment.");
+      ? `Best setup: ${best.symbol} ${best.bias} (grade ${best.grade}, score ${fmtSigned(best.total, 0)}).`
+      : "No A or B setup right now.");
 
   return {
     meta: {

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const {
     data: { user },
   } = await sb.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Connexion requise" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Sign-in required" }, { status: 401 });
 
   const refresh = req.nextUrl.searchParams.get("refresh") === "1";
   const now = Date.now();
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
           const err = await writeCache(sb, "prices", p);
           if (err) errors.push(err);
         })
-        .catch((e: Error) => errors.push(`Prix Yahoo indisponibles : ${e.message}`)),
+        .catch((e: Error) => errors.push(`Yahoo prices unavailable: ${e.message}`)),
     needCot &&
       fetchCot()
         .then(async (c) => {
@@ -47,12 +47,12 @@ export async function GET(req: NextRequest) {
           const err = await writeCache(sb, "cot", c);
           if (err) errors.push(err);
         })
-        .catch((e: Error) => errors.push(`COT indisponible : ${e.message}`)),
+        .catch((e: Error) => errors.push(`COT unavailable: ${e.message}`)),
   ]);
 
   if (!prices) {
     return NextResponse.json(
-      { error: errors.join(" · ") || "Aucune donnée de prix disponible." },
+      { error: errors.join(" · ") || "No price data available." },
       { status: 503 },
     );
   }
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(analyze(prices, cot, { mode, errors }));
   } catch (e) {
     return NextResponse.json(
-      { error: `Calcul impossible : ${e instanceof Error ? e.message : String(e)}` },
+      { error: `Calculation failed: ${e instanceof Error ? e.message : String(e)}` },
       { status: 500 },
     );
   }

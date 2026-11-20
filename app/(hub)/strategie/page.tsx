@@ -13,55 +13,55 @@ type Content = {
   checklist: string[];
 };
 
-// Contenu de départ : la stratégie ACR de Yassni. Modifiable depuis la page (enregistré dans Supabase).
+// Default content: Yassni's ACR strategy. Editable from the page (saved in Supabase).
 const DEFAULT: Content = {
   rules: [
-    "1. Tendance du jour : je la choisis avant la séance. Haussière = achats seulement. Baissière = ventes seulement.",
+    "1. Daily trend: I pick it before the session. Bullish = buys only. Bearish = sells only.",
     "",
-    "2. Range Asie : de 20h00 à 00h00 heure de New York. Son plus haut et son plus bas = la liquidité.",
+    "2. Asia range: from 20:00 to 00:00 New York time. Its high and low = the liquidity.",
     "",
-    "3. Sweep : entre 02h00 et 09h00 NY, une bougie H1 passe au-delà du haut ou du bas de l’Asie. J’attends que cette bougie H1 soit terminée, peu importe où elle clôture.",
+    "3. Sweep: between 02:00 and 09:00 NY, an H1 candle trades beyond the Asia high or low. I wait for that H1 candle to close, wherever it closes.",
     "",
-    "4. TC en M5 : je trace la ligne TC (voir l’explication plus bas). Le TC est validé seulement si le CORPS d’une bougie M5 clôture au-delà de la ligne, avant 09h30 NY.",
+    "4. TC on M5: I draw the TC line (see the explanation below). The TC is confirmed only if the BODY of an M5 candle closes beyond the line, before 09:30 NY.",
     "",
-    "5. Entrée : à la clôture de la bougie M5 qui valide le TC.",
-    "   • Stop loss : au-delà de l’extrême du sweep, + 5 ticks.",
-    "   • Take profit : ratio fixe.",
+    "5. Entry: at the close of the M5 candle that confirms the TC.",
+    "   • Stop loss: beyond the sweep extreme, + 5 ticks.",
+    "   • Take profit: fixed ratio.",
     "",
-    "Gestion du risque",
-    "   • Risque 1 % maximum par trade.",
-    "   • 2 trades maximum par jour.",
-    "   • Pas d’entrée juste avant une grosse news.",
-    "   • Si je casse une règle, j’arrête pour la journée.",
+    "Risk management",
+    "   • 1% max risk per trade.",
+    "   • 2 trades max per day.",
+    "   • No entry right before high-impact news.",
+    "   • If I break a rule, I stop for the day.",
   ].join("\n"),
   tc: [
-    "Le TC se trace en M5, après le sweep de l’Asie.",
+    "The TC is drawn on M5, after the Asia sweep.",
     "",
-    "• Pour un achat (le bas de l’Asie a été pris) : la ligne TC est le dernier sommet d’où est partie la descente qui a pris le bas de l’Asie.",
-    "• Pour une vente (le haut de l’Asie a été pris) : la ligne TC est le dernier creux d’où est partie la montée qui a pris le haut de l’Asie.",
+    "• For a buy (the Asia low was taken): the TC line is the last high that the move down which took the Asia low started from.",
+    "• For a sell (the Asia high was taken): the TC line is the last low that the move up which took the Asia high started from.",
     "",
-    "Validation : le CORPS d’une bougie M5 doit clôturer au-delà de la ligne TC. Une simple mèche ne compte pas.",
-    "Limite de temps : la validation doit arriver avant 09h30 NY. Après, pas de trade.",
+    "Confirmation: the BODY of an M5 candle must close beyond the TC line. A wick alone does not count.",
+    "Time limit: confirmation must come before 09:30 NY. After that, no trade.",
   ].join("\n"),
   examples:
-    "Décris ici tes trades modèles (date, marché, ce qui a validé chaque règle). Ajoute les captures dans le journal et note leur date ici.",
+    "Describe your model trades here (date, market, what confirmed each rule). Add the screenshots in the journal and note their date here.",
   backtestNote:
-    "Données Dukascopy 2023-2024. Règles appliquées automatiquement, SANS le filtre de tendance du jour (règle 1). TP en ratio 1:1. Nombre de gagnants arrondi à partir du % gagnants.",
+    "Dukascopy data 2023-2024. Rules applied automatically, WITHOUT the daily trend filter (rule 1). TP at a 1:1 ratio. Number of winners rounded from the win rate.",
   backtest: [
-    { periode: "2023-2024", marche: "EURUSD", trades: "473", gagnants: "246", rr: "1:1", resultat: "−6,5 R" },
+    { periode: "2023-2024", marche: "EURUSD", trades: "473", gagnants: "246", rr: "1:1", resultat: "−6.5 R" },
     { periode: "2023-2024", marche: "GBPUSD", trades: "480", gagnants: "230", rr: "1:1", resultat: "−36 R" },
   ],
   code: "// Colle ici le code Pine Script de ton indicateur ACR pour TradingView.\n//@version=5\nindicator(\"ACR\", overlay = true)\n",
   checklist: [
-    "Tendance du jour définie : je trade seulement dans son sens",
-    "Range Asie (20h00–00h00 NY) tracé : haut et bas marqués",
-    "Sweep : une bougie H1 a dépassé le haut ou le bas de l’Asie entre 02h00 et 09h00 NY, et elle est terminée",
-    "Ligne TC tracée en M5 (dernier sommet ou creux d’où est parti le sweep)",
-    "Le CORPS d’une bougie M5 a clôturé au-delà du TC, avant 09h30 NY",
-    "SL au-delà de l’extrême du sweep (+ 5 ticks), TP en ratio fixe",
-    "Risque 1 % maximum, lot calculé (Calculateur de risque)",
-    "Moins de 2 trades aujourd’hui et aucune règle cassée aujourd’hui",
-    "Pas de grosse news juste avant l’entrée (Calendrier des news)",
+    "Daily trend set: I only trade in its direction",
+    "Asia range (20:00–00:00 NY) drawn: high and low marked",
+    "Sweep: an H1 candle went beyond the Asia high or low between 02:00 and 09:00 NY, and it has closed",
+    "TC line drawn on M5 (last high or low the sweep move started from)",
+    "The BODY of an M5 candle closed beyond the TC, before 09:30 NY",
+    "SL beyond the sweep extreme (+ 5 ticks), TP at a fixed ratio",
+    "1% max risk, lot size calculated (Risk calculator)",
+    "Fewer than 2 trades today and no rule broken today",
+    "No high-impact news right before entry (News calendar)",
   ],
 };
 
@@ -87,10 +87,10 @@ export default function StrategyPage() {
     const { error } = await supabaseBrowser()
       .from("strategy")
       .upsert({ content: draft, updated_at: new Date().toISOString() });
-    if (error) return setStatus(`Erreur : ${error.message}`);
+    if (error) return setStatus(`Error: ${error.message}`);
     setC(draft);
     setEdit(false);
-    setStatus("Enregistré");
+    setStatus("Saved");
     setChecked([]);
   }
 
@@ -112,33 +112,33 @@ export default function StrategyPage() {
     <div className="stack" style={{ gap: 18 }}>
       <div className="page-head">
         <div>
-          <h1>Stratégie ACR</h1>
-          <p>Tes règles, la checklist avant chaque trade, tes exemples, ton backtest et le code de l’indicateur.</p>
+          <h1>ACR strategy</h1>
+          <p>Your rules, the pre-trade checklist, your examples, your backtest and the indicator code.</p>
         </div>
         <div className="row">
           {status && <span className="small muted">{status}</span>}
           {edit ? (
             <>
-              <button className="btn" onClick={() => setEdit(false)}>Annuler</button>
-              <button className="btn btn-primary" onClick={save}>Enregistrer</button>
+              <button className="btn" onClick={() => setEdit(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={save}>Save</button>
             </>
           ) : (
-            <button className="btn" onClick={() => { setDraft(c); setEdit(true); setStatus(null); }}>Modifier la page</button>
+            <button className="btn" onClick={() => { setDraft(c); setEdit(true); setStatus(null); }}>Edit page</button>
           )}
         </div>
       </div>
 
       <div className="grid g2">
         <section className="card">
-          <div className="card-h"><h2>Règles</h2></div>
+          <div className="card-h"><h2>Rules</h2></div>
           <div className="card-b">{block("rules", 12)}</div>
         </section>
 
         <section className="card" style={{ borderColor: allOk ? "var(--accent)" : undefined }}>
           <div className="card-h">
             <div>
-              <h2>Checklist avant chaque trade</h2>
-              <p>Tout doit être coché. Sinon, pas de trade.</p>
+              <h2>Pre-trade checklist</h2>
+              <p>Everything must be ticked. Otherwise, no trade.</p>
             </div>
             {!edit && (
               <span className={`tag ${allOk ? "tag-up" : "tag-warn"}`}>
@@ -156,7 +156,7 @@ export default function StrategyPage() {
                   value={draft.checklist.join("\n")}
                   onChange={(e) => setDraft({ ...draft, checklist: e.target.value.split("\n") })}
                 />
-                <span className="small muted">Un point par ligne.</span>
+                <span className="small muted">One item per line.</span>
               </>
             ) : (
               <>
@@ -177,8 +177,8 @@ export default function StrategyPage() {
                   </label>
                 ))}
                 <div className="row" style={{ justifyContent: "space-between", marginTop: 6 }}>
-                  <b className={allOk ? "up" : "muted"}>{allOk ? "Trade autorisé selon ton plan" : "Pas encore : tout n’est pas validé"}</b>
-                  <button className="btn btn-sm" onClick={() => setChecked([])}>Remettre à zéro</button>
+                  <b className={allOk ? "up" : "muted"}>{allOk ? "Trade allowed by your plan" : "Not yet: not everything is checked"}</b>
+                  <button className="btn btn-sm" onClick={() => setChecked([])}>Reset</button>
                 </div>
               </>
             )}
@@ -187,24 +187,24 @@ export default function StrategyPage() {
       </div>
 
       <section className="card">
-        <div className="card-h"><h2>Le TC expliqué</h2></div>
+        <div className="card-h"><h2>The TC explained</h2></div>
         <div className="card-b">{block("tc", 8)}</div>
       </section>
 
       <section className="card">
-        <div className="card-h"><h2>Exemples</h2></div>
+        <div className="card-h"><h2>Examples</h2></div>
         <div className="card-b">{block("examples", 6)}</div>
       </section>
 
       <section className="card">
         <div className="card-h">
           <div>
-            <h2>Résultats du backtest</h2>
-            <p>{totals.trades ? `${totals.trades} trades · ${Math.round((totals.wins / totals.trades) * 100)} % gagnants au total` : "Ajoute tes résultats ligne par ligne."}</p>
+            <h2>Backtest results</h2>
+            <p>{totals.trades ? `${totals.trades} trades · ${Math.round((totals.wins / totals.trades) * 100)}% overall win rate` : "Add your results row by row."}</p>
           </div>
           {edit && (
             <button className="btn btn-sm" onClick={() => setDraft({ ...draft, backtest: [...draft.backtest, { periode: "", marche: "", trades: "", gagnants: "", rr: "", resultat: "" }] })}>
-              + Ligne
+              + Row
             </button>
           )}
         </div>
@@ -212,11 +212,11 @@ export default function StrategyPage() {
         <div className="tbl-wrap">
           <table className="tbl">
             <thead>
-              <tr><th>Période</th><th>Marché</th><th className="r">Trades</th><th className="r">Gagnants</th><th className="r">% gagnants</th><th className="r">R:R moyen</th><th className="r">Résultat (R ou %)</th>{edit && <th />}</tr>
+              <tr><th>Period</th><th>Market</th><th className="r">Trades</th><th className="r">Winners</th><th className="r">Win rate</th><th className="r">Avg R:R</th><th className="r">Result (R or %)</th>{edit && <th />}</tr>
             </thead>
             <tbody>
               {bt.map((r, i) => {
-                const wr = Number(r.trades) ? Math.round((Number(r.gagnants) / Number(r.trades)) * 100) + " %" : "—";
+                const wr = Number(r.trades) ? Math.round((Number(r.gagnants) / Number(r.trades)) * 100) + "%" : "—";
                 const cell = (k: keyof BacktestRow, right = false) =>
                   edit ? (
                     <td className={right ? "r" : ""}>
@@ -248,19 +248,19 @@ export default function StrategyPage() {
               })}
             </tbody>
           </table>
-          {!bt.length && <div className="empty">Aucun résultat de backtest pour l’instant. Clique sur « Modifier la page » pour en ajouter.</div>}
+          {!bt.length && <div className="empty">No backtest results yet. Click “Edit page” to add some.</div>}
         </div>
       </section>
 
       <section className="card">
         <div className="card-h">
-          <div><h2>Code de l’indicateur TradingView</h2><p>Pine Script, à coller dans l’éditeur Pine de TradingView.</p></div>
+          <div><h2>TradingView indicator code</h2><p>Pine Script, to paste into the TradingView Pine Editor.</p></div>
           {!edit && (
             <button
               className="btn btn-sm"
               onClick={() => navigator.clipboard.writeText(c.code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {})}
             >
-              {copied ? "Copié !" : "Copier"}
+              {copied ? "Copied!" : "Copy"}
             </button>
           )}
         </div>
@@ -268,7 +268,7 @@ export default function StrategyPage() {
           {edit ? (
             <textarea id="s-code" className="input mono" rows={16} value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} spellCheck={false} />
           ) : (
-            <pre className="mono" style={{ margin: 0, padding: 14, background: "#15202B", color: "#E6EDF3", borderRadius: 8, overflowX: "auto", fontSize: 12.5, lineHeight: 1.6 }}>
+            <pre className="mono" style={{ margin: 0, padding: 14, background: "var(--sidebar)", color: "var(--text)", border: "1px solid var(--line)", borderRadius: 8, overflowX: "auto", fontSize: 12.5, lineHeight: 1.6 }}>
               {c.code}
             </pre>
           )}

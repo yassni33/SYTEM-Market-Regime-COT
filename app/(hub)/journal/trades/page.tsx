@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { AccountSelect } from "@/components/journal/AccountBar";
 import TradeForm from "@/components/journal/TradeForm";
 import { useJournal } from "@/components/journal/useJournal";
-import { ACCOUNT_TYPES, MISTAKES, tradeDay, type Trade } from "@/lib/journal";
+import { ACCOUNT_TYPES, MISTAKES, emotionLabel, mistakeLabel, tradeDay, type Trade } from "@/lib/journal";
 import { dateFr, money, num, signedMoney } from "@/lib/format";
 
 export default function TradesList() {
@@ -38,7 +38,7 @@ export default function TradesList() {
     <label className="field">
       <span>{label}</span>
       <select id={`f-${k}`} className="input" value={q[k]} onChange={(e) => set(k, e.target.value)}>
-        <option value="">Tous</option>
+        <option value="">All</option>
         {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </label>
@@ -48,33 +48,33 @@ export default function TradesList() {
     <div className="stack" style={{ gap: 18 }}>
       <div className="page-head">
         <div>
-          <h1>Liste des trades</h1>
-          <p>Clique sur un trade pour le modifier, voir ses captures ou le supprimer.</p>
+          <h1>Trade list</h1>
+          <p>Click a trade to edit it, see its screenshots or delete it.</p>
         </div>
         <div className="row">
           <AccountSelect j={j} />
-          <button className="btn btn-primary" onClick={() => setEditing("new")}>+ Ajouter un trade</button>
+          <button className="btn btn-primary" onClick={() => setEditing("new")}>+ Add trade</button>
         </div>
       </div>
 
       <div className="card card-b">
         <div className="form-grid">
-          {sel("market", "Marché", markets.map((m) => [m, m]))}
-          {sel("side", "Sens", [["Long", "Long"], ["Short", "Short"]])}
+          {sel("market", "Market", markets.map((m) => [m, m]))}
+          {sel("side", "Side", [["Long", "Long"], ["Short", "Short"]])}
           {sel("setup", "Setup", setups.map((s) => [s, s]))}
-          {sel("result", "Résultat", [["win", "Gagnants"], ["loss", "Perdants"], ["be", "Break-even"]])}
-          {sel("mistake", "Erreur", MISTAKES.map((m) => [m, m]))}
-          <label className="field"><span>Du</span><input id="f-from" className="input" type="date" value={q.from} onChange={(e) => set("from", e.target.value)} /></label>
-          <label className="field"><span>Au</span><input id="f-to" className="input" type="date" value={q.to} onChange={(e) => set("to", e.target.value)} /></label>
+          {sel("result", "Result", [["win", "Winners"], ["loss", "Losers"], ["be", "Break-even"]])}
+          {sel("mistake", "Mistake", MISTAKES.map((m) => [m, mistakeLabel(m)]))}
+          <label className="field"><span>From</span><input id="f-from" className="input" type="date" value={q.from} onChange={(e) => set("from", e.target.value)} /></label>
+          <label className="field"><span>To</span><input id="f-to" className="input" type="date" value={q.to} onChange={(e) => set("to", e.target.value)} /></label>
           <div className="field" style={{ justifyContent: "flex-end" }}>
-            <button className="btn" onClick={() => setQ({ market: "", side: "", setup: "", result: "", mistake: "", from: "", to: "" })}>Effacer les filtres</button>
+            <button className="btn" onClick={() => setQ({ market: "", side: "", setup: "", result: "", mistake: "", from: "", to: "" })}>Clear filters</button>
           </div>
         </div>
       </div>
 
       <section className="card">
         <div className="card-h">
-          <span className="muted">{rows.length} trades · {rows.length ? num((wins / rows.length) * 100, 0) : 0} % gagnants</span>
+          <span className="muted">{rows.length} trades · {rows.length ? num((wins / rows.length) * 100, 0) : 0}% win rate</span>
           <b className={`num ${total >= 0 ? "up" : "down"}`}>{signedMoney(total, j.currency)}</b>
         </div>
         <div className="tbl-wrap">
@@ -82,17 +82,17 @@ export default function TradesList() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Compte</th>
-                <th>Marché</th>
-                <th>Sens</th>
-                <th className="r">Lot</th>
-                <th className="r">Entrée</th>
-                <th className="r">Sortie</th>
-                <th className="r">P&L net</th>
+                <th>Account</th>
+                <th>Market</th>
+                <th>Side</th>
+                <th className="r">Lot size</th>
+                <th className="r">Entry</th>
+                <th className="r">Exit</th>
+                <th className="r">Net P&L</th>
                 <th>Setup</th>
-                <th>Erreurs</th>
-                <th>Émotion</th>
-                <th className="c">Note</th>
+                <th>Mistakes</th>
+                <th>Emotion</th>
+                <th className="c">Rating</th>
               </tr>
             </thead>
             <tbody>
@@ -103,7 +103,7 @@ export default function TradesList() {
                     <td className="num">{dateFr(t.closed_at ?? t.opened_at, { day: "2-digit", month: "short", year: "2-digit" })}</td>
                     <td>{a ? <span title={ACCOUNT_TYPES[a.type]}>{a.name}</span> : "—"}</td>
                     <td className="mono" style={{ fontWeight: 600 }}>
-                      {t.market} {t.screenshots.length > 0 && <span title="Captures" className="faint">▣</span>}
+                      {t.market} {t.screenshots.length > 0 && <span title="Screenshots" className="faint">▣</span>}
                     </td>
                     <td><span className={`tag ${t.side === "Long" ? "tag-up" : "tag-down"}`}>{t.side}</span></td>
                     <td className="r num">{t.lot ?? "—"}</td>
@@ -111,8 +111,8 @@ export default function TradesList() {
                     <td className="r num">{t.exit ?? "—"}</td>
                     <td className={`r num ${t.pnl > 0 ? "up" : t.pnl < 0 ? "down" : ""}`} style={{ fontWeight: 600 }}>{money(t.pnl, a?.currency ?? j.currency)}</td>
                     <td>{t.setup ?? "—"}</td>
-                    <td>{t.mistakes.length ? <span className="tag tag-warn" title={t.mistakes.join(", ")}>{t.mistakes.length} erreur{t.mistakes.length > 1 ? "s" : ""}</span> : <span className="faint">—</span>}</td>
-                    <td>{t.emotion ?? "—"}</td>
+                    <td>{t.mistakes.length ? <span className="tag tag-warn" title={t.mistakes.map(mistakeLabel).join(", ")}>{t.mistakes.length} mistake{t.mistakes.length > 1 ? "s" : ""}</span> : <span className="faint">—</span>}</td>
+                    <td>{emotionLabel(t.emotion) ?? "—"}</td>
                     <td className="c" style={{ color: "var(--warn)" }}>{t.rating ? "★".repeat(t.rating) : <span className="faint">—</span>}</td>
                   </tr>
                 );
@@ -120,7 +120,7 @@ export default function TradesList() {
             </tbody>
           </table>
           {!j.loading && rows.length === 0 && (
-            <div className="empty">{j.trades.length ? "Aucun trade pour ces filtres." : "Aucun trade enregistré. Clique sur « Ajouter un trade »."}</div>
+            <div className="empty">{j.trades.length ? "No trades match these filters." : "No trades logged yet. Click “Add trade”."}</div>
           )}
         </div>
       </section>

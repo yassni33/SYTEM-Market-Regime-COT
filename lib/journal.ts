@@ -32,7 +32,7 @@ export type Trade = {
   screenshots: string[];
 };
 
-export const ACCOUNT_TYPES: Record<Account["type"], string> = { prop: "Prop firm", reel: "Réel", demo: "Démo" };
+export const ACCOUNT_TYPES: Record<Account["type"], string> = { prop: "Prop firm", reel: "Live", demo: "Demo" };
 
 export const MISTAKES = [
   "Entrée trop tôt",
@@ -48,6 +48,33 @@ export const MISTAKES = [
 ];
 
 export const EMOTIONS = ["Calme", "Confiant", "Patient", "Impatient", "Stressé", "Peur", "Euphorique", "Frustré"];
+
+// The values above are what is saved in the database (kept as-is so existing trades still match).
+// These maps give the English text shown on screen.
+const MISTAKE_LABELS: Record<string, string> = {
+  "Entrée trop tôt": "Entered too early",
+  "Entrée tardive (FOMO)": "Late entry (FOMO)",
+  "Hors plan / pas de setup": "Off plan / no setup",
+  "SL déplacé": "Moved SL",
+  "Pas de SL": "No SL",
+  "Taille trop grosse": "Position too big",
+  "Sortie trop tôt": "Exited too early",
+  "Revenge trade": "Revenge trade",
+  "News ignorée": "Ignored news",
+  "Contre le biais": "Against the bias",
+};
+const EMOTION_LABELS: Record<string, string> = {
+  Calme: "Calm",
+  Confiant: "Confident",
+  Patient: "Patient",
+  Impatient: "Impatient",
+  "Stressé": "Stressed",
+  Peur: "Fearful",
+  Euphorique: "Euphoric",
+  "Frustré": "Frustrated",
+};
+export const mistakeLabel = (v: string) => MISTAKE_LABELS[v] ?? v;
+export const emotionLabel = (v: string | null | undefined) => (v ? EMOTION_LABELS[v] ?? v : null);
 
 export const tradeDay = (t: Trade) => dayKey(t.closed_at ?? t.opened_at);
 
@@ -101,7 +128,7 @@ export function computeStats(trades: Trade[], initialBalance: number) {
   const group = (key: (t: Trade) => string | null) => {
     const m = new Map<string, { pnl: number; count: number; wins: number }>();
     for (const t of sorted) {
-      const k = key(t) || "Sans setup";
+      const k = key(t) || "No setup";
       const g = m.get(k) ?? { pnl: 0, count: 0, wins: 0 };
       g.pnl += t.pnl;
       g.count += 1;
@@ -125,12 +152,12 @@ export function computeStats(trades: Trade[], initialBalance: number) {
   const bestDay = days.reduce((m, [, d]) => Math.max(m, d.pnl), 0);
   const consistency = net > 0 ? clamp(100 - ((bestDay / net) * 100 - 20) * 1.25) : 0;
   const edgeAxes = [
-    { label: "% gagnants", value: clamp((winRate / 60) * 100) },
+    { label: "Win rate", value: clamp((winRate / 60) * 100) },
     { label: "Profit factor", value: clamp((Math.min(profitFactor, 10) / 2.5) * 100) },
-    { label: "Gain/perte moy.", value: clamp((Math.min(winLossRatio, 10) / 2.5) * 100) },
-    { label: "% jours gagnants", value: clamp((dayWinRate / 60) * 100) },
+    { label: "Avg win/loss", value: clamp((Math.min(winLossRatio, 10) / 2.5) * 100) },
+    { label: "Day win rate", value: clamp((dayWinRate / 60) * 100) },
     { label: "Drawdown", value: n ? clamp(100 - maxDDPct * 10) : 0 },
-    { label: "Régularité", value: consistency },
+    { label: "Consistency", value: consistency },
   ];
   const edge = n ? edgeAxes.reduce((s, a) => s + a.value, 0) / edgeAxes.length : 0;
 
@@ -172,8 +199,8 @@ export type Transaction = {
 };
 
 export const TX_TYPES: Record<Transaction["type"], string> = {
-  withdrawal: "Retrait",
-  deposit: "Dépôt",
+  withdrawal: "Withdrawal",
+  deposit: "Deposit",
   payout: "Payout",
 };
 

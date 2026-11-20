@@ -39,7 +39,7 @@ export function useJournal() {
     setTxError(
       x.error
         ? x.error.code === "42P01" || /account_transactions/.test(x.error.message)
-          ? "La table des retraits et dépôts n’existe pas encore : colle le fichier supabase/2026-11-20_account_transactions.sql dans le SQL Editor de Supabase."
+          ? "The withdrawals and deposits table does not exist yet: paste the file supabase/2026-11-20_account_transactions.sql into the Supabase SQL Editor."
           : x.error.message
         : null,
     );

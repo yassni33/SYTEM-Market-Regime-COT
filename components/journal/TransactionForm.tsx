@@ -32,9 +32,9 @@ export default function TransactionForm({
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!accountId) return setErr("Crée d’abord un compte (bouton « Comptes »).");
-    const value = Number(amount.replace(/\s/g, "").replace(",", "."));
-    if (!isFinite(value) || value <= 0) return setErr("Le montant doit être un nombre positif. Le type indique si l’argent entre ou sort.");
+    if (!accountId) return setErr("Create an account first (Accounts button).");
+    const value = Number(amount.replace(/[\s,]/g, ""));
+    if (!isFinite(value) || value <= 0) return setErr("The amount must be a positive number. The type says whether money comes in or goes out.");
     setBusy(true);
     setErr(null);
     const row = { account_id: accountId, type, amount: value, date, note: note.trim() || null };
@@ -55,11 +55,11 @@ export default function TransactionForm({
         onClick={(e) => e.stopPropagation()}
         onSubmit={save}
         role="dialog"
-        aria-label={isNew ? "Nouveau retrait ou dépôt" : "Modifier le mouvement"}
+        aria-label={isNew ? "New withdrawal or deposit" : "Edit transaction"}
       >
         <div className="card-h">
-          <h2>{isNew ? "Retrait / Dépôt" : "Modifier le mouvement"}</h2>
-          <button type="button" className="btn btn-sm" onClick={onClose}>Fermer</button>
+          <h2>{isNew ? "Withdrawal / Deposit" : "Edit transaction"}</h2>
+          <button type="button" className="btn btn-sm" onClick={onClose}>Close</button>
         </div>
         <div className="card-b stack">
           <div className="field">
@@ -73,22 +73,22 @@ export default function TransactionForm({
             </div>
             <span className="small muted" style={{ fontWeight: 400 }}>
               {type === "deposit"
-                ? "Argent ajouté sur le compte. Il augmente le solde, pas ton P&L."
+                ? "Money added to the account. It raises the balance, not your P&L."
                 : type === "payout"
-                  ? "Part des profits versée par la prop firm. Elle baisse le solde du compte."
-                  : "Argent retiré du compte. Il baisse le solde, pas ton P&L."}
+                  ? "Profit split paid by the prop firm. It lowers the account balance."
+                  : "Money taken out of the account. It lowers the balance, not your P&L."}
             </span>
           </div>
           <div className="form-grid">
             <label className="field">
-              <span>Compte</span>
+              <span>Account</span>
               <select id="tx-account" className="input" value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
-                {accounts.length === 0 && <option value="">Aucun compte</option>}
+                {accounts.length === 0 && <option value="">No account</option>}
                 {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </label>
             <label className="field">
-              <span>Montant ({acc?.currency ?? "USD"})</span>
+              <span>Amount ({acc?.currency ?? "USD"})</span>
               <input id="tx-amount" className="input num" inputMode="decimal" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1000" />
             </label>
             <label className="field">
@@ -98,12 +98,12 @@ export default function TransactionForm({
           </div>
           <label className="field">
             <span>Note</span>
-            <input id="tx-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="1er payout FTMO, virement banque…" />
+            <input id="tx-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="1st FTMO payout, bank transfer…" />
           </label>
           {err && <div className="notice err">{err}</div>}
           <div className="row" style={{ justifyContent: "flex-end" }}>
-            <button type="button" className="btn" onClick={onClose}>Annuler</button>
-            <button className="btn btn-primary" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer"}</button>
+            <button type="button" className="btn" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
           </div>
         </div>
       </form>

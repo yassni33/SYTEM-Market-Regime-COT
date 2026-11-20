@@ -6,10 +6,10 @@ import { ageText } from "@/lib/format";
 const NY = "America/New_York";
 const MA = "Africa/Casablanca";
 const IMPACTS = [
-  { key: "High", label: "Forte", cls: "tag-down" },
-  { key: "Medium", label: "Moyenne", cls: "tag-warn" },
-  { key: "Low", label: "Faible", cls: "" },
-  { key: "Holiday", label: "Férié", cls: "" },
+  { key: "High", label: "High", cls: "tag-down" },
+  { key: "Medium", label: "Medium", cls: "tag-warn" },
+  { key: "Low", label: "Low", cls: "" },
+  { key: "Holiday", label: "Holiday", cls: "" },
 ];
 const CCYS = ["USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF", "CNY"];
 
@@ -23,7 +23,7 @@ function nyParts(iso: string) {
   return { day: `${p.year}-${p.month}-${p.day}`, minutes: Number(p.hour) * 60 + Number(p.minute) };
 }
 const hm = (iso: string, tz: string) =>
-  new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: tz });
 
 export default function NewsPage() {
   const [events, setEvents] = useState<FfEvent[] | null>(null);
@@ -39,7 +39,7 @@ export default function NewsPage() {
     try {
       const res = await fetch(`/api/calendar${refresh ? "?refresh=1" : ""}`, { cache: "no-store" });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? `Erreur ${res.status}`);
+      if (!res.ok) throw new Error(json.error ?? `Error ${res.status}`);
       setEvents(json.events);
       setFetchedAt(json.fetchedAt);
       setError(json.error ?? null);
@@ -93,12 +93,12 @@ export default function NewsPage() {
     <div className="stack" style={{ gap: 18 }}>
       <div className="page-head">
         <div>
-          <h1>Calendrier des news</h1>
-          <p>Semaine en cours (ForexFactory), en heure de New York et heure du Maroc.</p>
+          <h1>News calendar</h1>
+          <p>This week (ForexFactory), in New York time and Morocco time.</p>
         </div>
         <div className="row">
-          {fetchedAt && <span className="small muted">Mis à jour {ageText(fetchedAt)}</span>}
-          <button className="btn" onClick={() => load(true)} disabled={loading}>{loading ? "Chargement…" : "Refresh"}</button>
+          {fetchedAt && <span className="small muted">Updated {ageText(fetchedAt)}</span>}
+          <button className="btn" onClick={() => load(true)} disabled={loading}>{loading ? "Loading…" : "Refresh"}</button>
         </div>
       </div>
 
@@ -110,11 +110,11 @@ export default function NewsPage() {
             <path d="M12 3l10 18H2zM12 10v5M12 18h.01" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <div>
-            <b>News forte pendant ta fenêtre de trading (02h00–09h30 NY)</b>
+            <b>High-impact news during your trading window (02:00–09:30 NY)</b>
             <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
               {alerts.map((e, i) => (
                 <li key={i}>
-                  {new Date(e.date).toLocaleDateString("fr-FR", { weekday: "long", timeZone: NY })} {hm(e.date, NY)} NY ({hm(e.date, MA)} Maroc) · <b>{e.country}</b> {e.title}
+                  {new Date(e.date).toLocaleDateString("en-US", { weekday: "long", timeZone: NY })} {hm(e.date, NY)} NY ({hm(e.date, MA)} Morocco) · <b>{e.country}</b> {e.title}
                 </li>
               ))}
             </ul>
@@ -124,7 +124,7 @@ export default function NewsPage() {
 
       <div className="card card-b stack" style={{ gap: 12 }}>
         <div className="row">
-          <span className="label" style={{ width: 90 }}>Importance</span>
+          <span className="label" style={{ width: 90 }}>Impact</span>
           {IMPACTS.map((i) => (
             <button key={i.key} className={`chip ${impacts.includes(i.key) ? "on" : ""}`} onClick={() => toggle(impacts, setImpacts, i.key)}>
               {i.label}
@@ -132,8 +132,8 @@ export default function NewsPage() {
           ))}
         </div>
         <div className="row">
-          <span className="label" style={{ width: 90 }}>Devises</span>
-          <button className={`chip ${ccys.length === 0 ? "on" : ""}`} onClick={() => setCcys([])}>Toutes</button>
+          <span className="label" style={{ width: 90 }}>Currencies</span>
+          <button className={`chip ${ccys.length === 0 ? "on" : ""}`} onClick={() => setCcys([])}>All</button>
           {CCYS.map((c) => (
             <button key={c} className={`chip ${ccys.includes(c) ? "on" : ""}`} onClick={() => toggle(ccys, setCcys, c)}>{c}</button>
           ))}
@@ -141,27 +141,27 @@ export default function NewsPage() {
       </div>
 
       {!events && loading && <div className="card card-b"><div className="skeleton" style={{ height: 200 }} /></div>}
-      {events && days.length === 0 && <div className="card empty">Aucune news pour ces filtres.</div>}
+      {events && days.length === 0 && <div className="card empty">No news for these filters.</div>}
 
       {days.map(([day, list]) => (
         <section key={day} className="card">
           <div className="card-h">
             <h2 style={{ textTransform: "capitalize" }}>
-              {new Date(day + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+              {new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </h2>
-            {day === todayNy && <span className="tag tag-accent">Aujourd’hui</span>}
+            {day === todayNy && <span className="tag tag-accent">Today</span>}
           </div>
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
                 <tr>
-                  <th>Heure NY</th>
-                  <th>Maroc</th>
-                  <th>Devise</th>
-                  <th>Importance</th>
-                  <th>Événement</th>
-                  <th className="r">Prévision</th>
-                  <th className="r">Précédent</th>
+                  <th>NY time</th>
+                  <th>Morocco</th>
+                  <th>Currency</th>
+                  <th>Impact</th>
+                  <th>Event</th>
+                  <th className="r">Forecast</th>
+                  <th className="r">Previous</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,7 +173,7 @@ export default function NewsPage() {
                   const allDay = minutes === 0 && e.impact === "Holiday";
                   return (
                     <tr key={i} style={{ opacity: past ? 0.5 : 1, background: inWindow ? "var(--warn-soft)" : undefined }}>
-                      <td className="num" style={{ fontWeight: 600 }}>{allDay ? "Journée" : hm(e.date, NY)}</td>
+                      <td className="num" style={{ fontWeight: 600 }}>{allDay ? "All day" : hm(e.date, NY)}</td>
                       <td className="num muted">{allDay ? "—" : hm(e.date, MA)}</td>
                       <td className="mono" style={{ fontWeight: 600 }}>{e.country}</td>
                       <td><span className={`tag ${imp?.cls ?? ""}`}>{imp?.label ?? e.impact}</span></td>

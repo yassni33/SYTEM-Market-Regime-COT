@@ -55,13 +55,13 @@ export const COT_CODES: Record<string, string> = {
 
 export const COT_LABELS: Record<string, string> = {
   EUR: "Euro (EUR)",
-  GBP: "Livre (GBP)",
-  JPY: "Yen (JPY)",
-  AUD: "Dollar australien (AUD)",
-  NZD: "Dollar néo-zélandais (NZD)",
-  CAD: "Dollar canadien (CAD)",
-  CHF: "Franc suisse (CHF)",
-  USD: "Dollar index (USD)",
+  GBP: "British pound (GBP)",
+  JPY: "Japanese yen (JPY)",
+  AUD: "Australian dollar (AUD)",
+  NZD: "New Zealand dollar (NZD)",
+  CAD: "Canadian dollar (CAD)",
+  CHF: "Swiss franc (CHF)",
+  USD: "US Dollar index (USD)",
   ES: "S&P 500 (ES)",
   NQ: "Nasdaq (NQ)",
   YM: "Dow (YM)",
@@ -90,8 +90,8 @@ export function priceDecimals(symbol: string): number {
   return 5;
 }
 
-export const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
-export const MONTHS_FR_LONG = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export const MONTHS_LONG = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];

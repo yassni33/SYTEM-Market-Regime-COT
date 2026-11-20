@@ -6,7 +6,7 @@ import TradeForm from "@/components/journal/TradeForm";
 import TransactionForm from "@/components/journal/TransactionForm";
 import { useJournal } from "@/components/journal/useJournal";
 import { BarChart, HBars, LineChart, Radar, SERIES } from "@/components/charts";
-import { computeCashflow, computeStats, isOutflow, TX_TYPES, type Transaction } from "@/lib/journal";
+import { computeCashflow, computeStats, isOutflow, mistakeLabel, TX_TYPES, type Transaction } from "@/lib/journal";
 import { compact, dateFr, money, num, pct, signedMoney } from "@/lib/format";
 
 type Tab = "dashboard" | "mouvements";
@@ -39,7 +39,7 @@ export default function JournalDashboard() {
       let index = 0;
       for (let i = 0; i < labels.length; i++) if (labels[i] <= t.date) index = i;
       const acc = j.accounts.find((a) => a.id === t.account_id);
-      return { index, label: `${TX_TYPES[t.type]} ${money(-t.amount, acc?.currency ?? ccy)} le ${dateFr(t.date, { day: "numeric", month: "short" })}` };
+      return { index, label: `${TX_TYPES[t.type]} ${money(-t.amount, acc?.currency ?? ccy)} on ${dateFr(t.date, { month: "short", day: "numeric" })}` };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.equity, j.filteredTx, j.accounts]);
@@ -48,30 +48,30 @@ export default function JournalDashboard() {
   const lastDays = s.days.slice(-30);
 
   const kpis: { label: string; value: string; tone?: string; sub?: string }[] = [
-    { label: "P&L net", value: signedMoney(s.net, ccy), tone: s.net >= 0 ? "up" : "down", sub: `${s.n} trades · frais ${money(s.fees, ccy)}` },
-    { label: "% gagnants", value: `${num(s.winRate, 1)} %`, sub: `${s.wins} gagnants / ${s.losses} perdants` },
+    { label: "Net P&L", value: signedMoney(s.net, ccy), tone: s.net >= 0 ? "up" : "down", sub: `${s.n} trades · fees ${money(s.fees, ccy)}` },
+    { label: "Win rate", value: `${num(s.winRate, 1)}%`, sub: `${s.wins} wins / ${s.losses} losses` },
     { label: "Profit factor", value: isFinite(s.profitFactor) ? num(s.profitFactor, 2) : "∞", tone: s.profitFactor >= 1 ? "up" : "down" },
-    { label: "% jours gagnants", value: `${num(s.dayWinRate, 1)} %`, sub: `${s.days.length} jours tradés` },
-    { label: "Gain moyen / perte moyenne", value: isFinite(s.winLossRatio) ? num(s.winLossRatio, 2) : "∞", sub: `${money(s.avgWin, ccy)} / ${money(s.avgLoss, ccy)}` },
-    { label: "Espérance par trade", value: signedMoney(s.expectancy, ccy), tone: s.expectancy >= 0 ? "up" : "down" },
+    { label: "Day win rate", value: `${num(s.dayWinRate, 1)}%`, sub: `${s.days.length} days traded` },
+    { label: "Avg win / avg loss", value: isFinite(s.winLossRatio) ? num(s.winLossRatio, 2) : "∞", sub: `${money(s.avgWin, ccy)} / ${money(s.avgLoss, ccy)}` },
+    { label: "Expectancy per trade", value: signedMoney(s.expectancy, ccy), tone: s.expectancy >= 0 ? "up" : "down" },
     {
-      label: "Solde actuel",
+      label: "Current balance",
       value: money(cash.balance, ccy),
-      sub: `Départ ${money(cash.initial, ccy, 0)}${cash.deposits ? ` · dépôts ${money(cash.deposits, ccy, 0)}` : ""}`,
+      sub: `Starting ${money(cash.initial, ccy, 0)}${cash.deposits ? ` · deposits ${money(cash.deposits, ccy, 0)}` : ""}`,
     },
     {
-      label: "Total retiré",
+      label: "Total withdrawn",
       value: money(cash.totalWithdrawn, ccy),
       tone: cash.totalWithdrawn > 0 ? "up" : undefined,
       sub: cash.totalWithdrawn
-        ? `Retraits ${money(cash.withdrawals, ccy, 0)} · payouts ${money(cash.payouts, ccy, 0)}`
-        : "Ce que tu as vraiment encaissé",
+        ? `Withdrawals ${money(cash.withdrawals, ccy, 0)} · payouts ${money(cash.payouts, ccy, 0)}`
+        : "What you have actually cashed out",
     },
     {
-      label: "% de rendement",
+      label: "Return",
       value: pct(cash.returnPct),
       tone: (cash.returnPct ?? 0) >= 0 ? "up" : "down",
-      sub: "P&L des trades ÷ (départ + dépôts)",
+      sub: "Trade P&L ÷ (starting balance + deposits)",
     },
   ];
 
@@ -80,27 +80,27 @@ export default function JournalDashboard() {
       <div className="page-head">
         <div>
           <h1>Journal · Dashboard</h1>
-          <p>Tes statistiques de trading, par compte ou tous comptes confondus.</p>
+          <p>Your trading stats, per account or across all accounts.</p>
         </div>
         <div className="row">
           <AccountSelect j={j} />
-          <button className="btn" onClick={() => setTxForm("new")}>+ Retrait / Dépôt</button>
-          <button className="btn btn-primary" onClick={() => setAdding(true)}>+ Ajouter un trade</button>
+          <button className="btn" onClick={() => setTxForm("new")}>+ Withdrawal / Deposit</button>
+          <button className="btn btn-primary" onClick={() => setAdding(true)}>+ Add trade</button>
         </div>
       </div>
 
-      <div className="seg" role="tablist" aria-label="Vue du journal" style={{ alignSelf: "flex-start" }}>
+      <div className="seg" role="tablist" aria-label="Journal view" style={{ alignSelf: "flex-start" }}>
         <button role="tab" aria-selected={tab === "dashboard"} className={tab === "dashboard" ? "on" : ""} onClick={() => setTab("dashboard")}>
-          Tableau de bord
+          Dashboard
         </button>
         <button role="tab" aria-selected={tab === "mouvements"} className={tab === "mouvements" ? "on" : ""} onClick={() => setTab("mouvements")}>
-          Mouvements{j.filteredTx.length ? ` (${j.filteredTx.length})` : ""}
+          Transactions{j.filteredTx.length ? ` (${j.filteredTx.length})` : ""}
         </button>
       </div>
 
       {j.error && <div className="notice err">{j.error}</div>}
       {!j.loading && j.accounts.length === 0 && (
-        <div className="notice ok">Bienvenue ! Commence par créer un compte (bouton « Comptes »), puis ajoute ton premier trade.</div>
+        <div className="notice ok">Welcome! Start by creating an account (Accounts button), then add your first trade.</div>
       )}
 
       {tab === "mouvements" ? (
@@ -122,7 +122,7 @@ export default function JournalDashboard() {
           <div className="card-h">
             <div>
               <h2>Edge score</h2>
-              <p>Moyenne de 6 critères notés sur 100.</p>
+              <p>Average of 6 criteria scored out of 100.</p>
             </div>
             <span className="num" style={{ fontSize: 28, fontWeight: 600, color: s.edge >= 60 ? "var(--up)" : s.edge >= 40 ? "var(--warn)" : "var(--down)" }}>
               {num(s.edge, 0)}<span className="muted" style={{ fontSize: 14 }}> /100</span>
@@ -143,14 +143,14 @@ export default function JournalDashboard() {
         <section className="card">
           <div className="card-h">
             <div>
-              <h2>Courbe d’équité</h2>
-              <p>Solde de départ + P&L des trades · drawdown max {money(s.maxDD, ccy)} ({num(s.maxDDPct, 1)} %)</p>
+              <h2>Equity curve</h2>
+              <p>Starting balance + trade P&L · max drawdown {money(s.maxDD, ccy)} ({num(s.maxDDPct, 1)}%)</p>
             </div>
           </div>
           <div className="card-b">
             <LineChart
               labels={s.equity.map((e) => e.label)}
-              series={[{ name: "Solde", data: s.equity.map((e) => e.value), color: SERIES[0] }]}
+              series={[{ name: "Balance", data: s.equity.map((e) => e.value), color: SERIES[0] }]}
               format={(v) => compact(v)}
               formatLabel={(d) => dateFr(d, { day: "numeric", month: "short" })}
               zeroLine={false}
@@ -160,7 +160,7 @@ export default function JournalDashboard() {
             />
             {markers.length > 0 && (
               <div className="small muted" style={{ marginTop: 6 }}>
-                <span style={{ color: "var(--text)", fontSize: 10 }}>▼</span> Retrait ou payout ({markers.length}). La courbe ne descend pas : ces sorties ne sont pas des pertes.
+                <span style={{ color: "var(--text)", fontSize: 10 }}>▼</span> Withdrawal or payout ({markers.length}). The curve does not drop: cash taken out is not a loss.
               </div>
             )}
           </div>
@@ -168,7 +168,7 @@ export default function JournalDashboard() {
       </div>
 
       <section className="card">
-        <div className="card-h"><div><h2>P&L par jour</h2><p>30 derniers jours tradés</p></div></div>
+        <div className="card-h"><div><h2>P&L by day</h2><p>Last 30 trading days</p></div></div>
         <div className="card-b">
           <BarChart
             labels={lastDays.map(([d]) => d)}
@@ -181,20 +181,20 @@ export default function JournalDashboard() {
 
       <div className="grid g3">
         <section className="card">
-          <div className="card-h"><h2>P&L par marché</h2></div>
+          <div className="card-h"><h2>P&L by market</h2></div>
           <div className="card-b"><HBars rows={s.byMarket.slice(0, 10).map((g) => ({ label: g.label, value: g.pnl, sub: `${g.count} trades` }))} format={(v) => compact(v)} /></div>
         </section>
         <section className="card">
-          <div className="card-h"><h2>P&L par setup</h2></div>
-          <div className="card-b"><HBars rows={s.bySetup.slice(0, 10).map((g) => ({ label: g.label, value: g.pnl, sub: `${g.count} trades, ${num((g.wins / g.count) * 100, 0)} % gagnants` }))} format={(v) => compact(v)} /></div>
+          <div className="card-h"><h2>P&L by setup</h2></div>
+          <div className="card-b"><HBars rows={s.bySetup.slice(0, 10).map((g) => ({ label: g.label, value: g.pnl, sub: `${g.count} trades, ${num((g.wins / g.count) * 100, 0)}% win rate` }))} format={(v) => compact(v)} /></div>
         </section>
         <section className="card">
-          <div className="card-h"><div><h2>Coût des erreurs</h2><p>P&L total des trades avec cette erreur</p></div></div>
+          <div className="card-h"><div><h2>Cost of mistakes</h2><p>Total P&L of trades with this mistake</p></div></div>
           <div className="card-b">
             {s.mistakes.length ? (
-              <HBars rows={s.mistakes.map((g) => ({ label: g.label, value: g.pnl, sub: `${g.count} trades` }))} format={(v) => compact(v)} />
+              <HBars rows={s.mistakes.map((g) => ({ label: mistakeLabel(g.label), value: g.pnl, sub: `${g.count} trades` }))} format={(v) => compact(v)} />
             ) : (
-              <div className="empty">Aucune erreur notée. Coche-les dans tes trades pour voir ce qu’elles te coûtent.</div>
+              <div className="empty">No mistakes logged. Tag them on your trades to see what they cost you.</div>
             )}
           </div>
         </section>

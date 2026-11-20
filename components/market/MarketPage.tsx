@@ -17,7 +17,7 @@ export default function MarketPage() {
     try {
       const res = await fetch(`/api/market${refresh ? "?refresh=1" : ""}`, { cache: "no-store" });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? `Erreur ${res.status}`);
+      if (!res.ok) throw new Error(json.error ?? `Error ${res.status}`);
       setData(json);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -36,25 +36,25 @@ export default function MarketPage() {
       <div className="page-head">
         <div>
           <h1>Market Regime & COT</h1>
-          <p>Le biais de la semaine : quels marchés regarder à l’achat ou à la vente, et pourquoi.</p>
+          <p>This week’s bias: which markets to look at for buys or sells, and why.</p>
         </div>
         <div className="row">
           {m && (
-            <span className={`pill ${m.mode === "live" ? "pill-live" : "pill-snap"}`} title={m.mode === "live" ? "Prix de moins de 4 h" : "Dernières données enregistrées dans le cloud"}>
+            <span className={`pill ${m.mode === "live" ? "pill-live" : "pill-snap"}`} title={m.mode === "live" ? "Prices less than 4 h old" : "Last data saved in the cloud"}>
               <span className="dot" />
               {m.mode === "live" ? "Live" : "Snapshot"}
             </span>
           )}
           {m && (
             <span className="small muted">
-              Prix : {new Date(m.pricesAt!).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" })} ({ageText(m.pricesAt)}) · COT du {dateFr(m.cotReport)}
+              Prices: {new Date(m.pricesAt!).toLocaleString("en-US", { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })} ({ageText(m.pricesAt)}) · COT of {dateFr(m.cotReport)}
             </span>
           )}
           <button className="btn" onClick={() => load(true)} disabled={loading}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={loading ? { animation: "spin 1s linear infinite" } : undefined}>
               <path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            {loading ? "Mise à jour…" : "Refresh"}
+            {loading ? "Updating…" : "Refresh"}
           </button>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default function MarketPage() {
         <div className="notice">
           <span>
             {m.errors.join(" · ")}
-            {m.mode === "snapshot" && " Les données affichées sont les dernières enregistrées."}
+            {m.mode === "snapshot" && " Showing the last saved data."}
           </span>
         </div>
       ) : null}
@@ -89,8 +89,8 @@ export default function MarketPage() {
           <Watchlist a={data} />
 
           <p className="small muted" style={{ textAlign: "center", maxWidth: 640, margin: "8px auto 0" }}>
-            Ces notes sont un filtre pour ton analyse, pas un signal pour trader à l’aveugle. Vérifie toujours ton plan
-            (structure, niveaux, news) avant d’entrer.
+            These grades are a filter for your analysis, not a signal to trade blindly. Always check your plan
+            (structure, levels, news) before entering.
           </p>
         </>
       )}
@@ -106,7 +106,7 @@ function LoadingState() {
         <div className="card card-b"><div className="skeleton" style={{ height: 220 }} /></div>
         <div className="card card-b"><div className="skeleton" style={{ height: 220 }} /></div>
       </div>
-      <p className="muted small" style={{ textAlign: "center" }}>Chargement des prix Yahoo et du rapport COT…</p>
+      <p className="muted small" style={{ textAlign: "center" }}>Loading Yahoo prices and the COT report…</p>
     </div>
   );
 }
@@ -125,12 +125,12 @@ function RegimeSection({ a }: { a: Analysis }) {
   const r = a.regime;
   return (
     <section className="card">
-      <Step n={1} title="Régime de marché" sub="6 tests : 4 « oui » ou plus = risk-on, 2 ou moins = risk-off, sinon mixte." right={<RegimeBadge label={r.label} />} />
+      <Step n={1} title="Market regime" sub="6 tests: 4 or more “yes” = risk-on, 2 or fewer = risk-off, otherwise mixed." right={<RegimeBadge label={r.label} />} />
       <div className="grid g2" style={{ gap: 0 }}>
         <div className="card-b" style={{ borderRight: "1px solid var(--line)" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
             <span className="num" style={{ fontSize: 28, fontWeight: 600 }}>{r.yes}</span>
-            <span className="muted">/ 6 tests positifs</span>
+            <span className="muted">/ 6 tests passed</span>
           </div>
           <div className="stack" style={{ gap: 10 }}>
             {r.tests.map((t) => (
@@ -139,7 +139,7 @@ function RegimeSection({ a }: { a: Analysis }) {
                   className={`tag ${t.ok ? "tag-up" : "tag-down"}`}
                   style={{ width: 38, justifyContent: "center", flex: "none" }}
                 >
-                  {t.ok ? "OUI" : "NON"}
+                  {t.ok ? "YES" : "NO"}
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <div>{t.label}</div>
@@ -153,11 +153,11 @@ function RegimeSection({ a }: { a: Analysis }) {
           <table className="tbl">
             <thead>
               <tr>
-                <th>Intermarché</th>
-                <th className="r">Dernier</th>
-                <th className="r">5 j</th>
-                <th className="r">20 j</th>
-                <th>40 jours</th>
+                <th>Intermarket</th>
+                <th className="r">Last</th>
+                <th className="r">5 d</th>
+                <th className="r">20 d</th>
+                <th>40 days</th>
               </tr>
             </thead>
             <tbody>
@@ -184,7 +184,7 @@ function RegimeSection({ a }: { a: Analysis }) {
 function StrengthSection({ a }: { a: Analysis }) {
   return (
     <section className="card">
-      <Step n={2} title="Force des devises" sub="Variation moyenne contre les 7 autres devises : 50 % × 1 semaine + 30 % × 1 mois + 20 % × 3 mois, ramenée de 0 à 10." />
+      <Step n={2} title="Currency strength" sub="Average % change vs the 7 other currencies: 50% × 1 week + 30% × 1 month + 20% × 3 months, scaled from 0 to 10." />
       <div className="grid g2" style={{ gap: 0 }}>
         <div className="card-b stack" style={{ gap: 10, borderRight: "1px solid var(--line)" }}>
           {a.strength.map((s) => {
@@ -193,7 +193,7 @@ function StrengthSection({ a }: { a: Analysis }) {
               <div
                 key={s.ccy}
                 style={{ display: "grid", gridTemplateColumns: "42px minmax(0,1fr) 40px", gap: 10, alignItems: "center" }}
-                title={`1 sem. ${pct(s.w)} · 1 mois ${pct(s.m)} · 3 mois ${pct(s.q)}`}
+                title={`1 wk ${pct(s.w)} · 1 mo ${pct(s.m)} · 3 mo ${pct(s.q)}`}
               >
                 <b className="mono">{s.ccy}</b>
                 <div className={`meter ${cls}`} style={{ height: 12 }}>
@@ -206,7 +206,7 @@ function StrengthSection({ a }: { a: Analysis }) {
           <div className="tbl-wrap" style={{ marginTop: 6 }}>
             <table className="tbl small">
               <thead>
-                <tr><th>Devise</th><th className="r">1 sem.</th><th className="r">1 mois</th><th className="r">3 mois</th></tr>
+                <tr><th>Currency</th><th className="r">1 week</th><th className="r">1 month</th><th className="r">3 months</th></tr>
               </thead>
               <tbody>
                 {a.strength.map((s) => (
@@ -222,7 +222,7 @@ function StrengthSection({ a }: { a: Analysis }) {
           </div>
         </div>
         <div className="card-b">
-          <div className="label" style={{ marginBottom: 10 }}>Les 8 plus grands écarts de force</div>
+          <div className="label" style={{ marginBottom: 10 }}>Top 8 strength gaps</div>
           <div className="stack" style={{ gap: 8 }}>
             {a.strongPairs.map((p, i) => (
               <div
@@ -238,7 +238,7 @@ function StrengthSection({ a }: { a: Analysis }) {
                     <b className="mono">{p.symbol}</b> <BiasTag bias={p.direction} />
                   </div>
                   <div className="small muted">
-                    Acheter <b className="up">{p.buy}</b> / vendre <b className="down">{p.sell}</b>
+                    Buy <b className="up">{p.buy}</b> / sell <b className="down">{p.sell}</b>
                   </div>
                 </div>
                 <span className="num" style={{ fontWeight: 600 }}>{num(p.gap, 1)}</span>
@@ -261,13 +261,13 @@ function SetupsSection({ a }: { a: Analysis }) {
     <section className="card">
       <Step
         n={3}
-        title="Meilleurs setups de la semaine"
-        sub="5 signaux par marché (+1, 0, −1). Note A = 4 ou 5 signaux alignés, B = 3, C = 2. NR4/NR7 = indication en plus, hors score."
-        right={<span className="small muted">{setups.length} setups A/B · {nC} en C (voir la watchlist)</span>}
+        title="Best setups of the week"
+        sub="5 signals per market (+1, 0, −1). Grade A = 4 or 5 aligned signals, B = 3, C = 2. NR4/NR7 = extra hint, not in the score."
+        right={<span className="small muted">{setups.length} A/B setups · {nC} graded C (see the watchlist)</span>}
       />
       <div className="card-b">
         {setups.length === 0 ? (
-          <div className="empty">Aucun marché n’a 3 signaux alignés ou plus en ce moment. Patience : pas de setup, pas de trade.</div>
+          <div className="empty">No market has 3 or more aligned signals right now. Be patient: no setup, no trade.</div>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 290px), 1fr))" }}>
             {setups.map((m) => <SetupCard key={m.symbol} m={m} />)}
@@ -288,20 +288,20 @@ function SetupCard({ m }: { m: MarketRow }) {
           <div style={{ fontWeight: 600, fontSize: 15 }} className="mono">{m.symbol}</div>
           <div className="small muted">{m.kind === "fx" ? "Forex" : m.name}</div>
         </div>
-        {m.nr && <span className="tag tag-accent" title="Dernier jour complet au plus petit range : compression, mouvement possible">{m.nr}</span>}
+        {m.nr && <span className="tag tag-accent" title="Last full day had the smallest range: compression, a move may follow">{m.nr}</span>}
         <span className={`tag ${long ? "tag-up" : "tag-down"}`} style={{ fontSize: 12, padding: "3px 9px" }}>{m.bias}</span>
       </div>
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
           <div>
             <div className="num" style={{ fontSize: 18, fontWeight: 600 }}>{num(m.price, m.dec)}</div>
-            <div className={`small num ${m.ch1w > 0 ? "up" : "down"}`}>{pct(m.ch1w)} sur 1 semaine</div>
+            <div className={`small num ${m.ch1w > 0 ? "up" : "down"}`}>{pct(m.ch1w)} over 1 week</div>
           </div>
           <Sparkline data={m.spark} width={100} height={32} />
         </div>
         {m.kind === "fx" ? (
           <div className="stack" style={{ gap: 4 }}>
-            <div className="small muted">Force {m.base} contre {m.quote}</div>
+            <div className="small muted">Strength {m.base} vs {m.quote}</div>
             <div style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr) 30px", gap: 8, alignItems: "center" }}>
               <span className="mono small">{m.base}</span>
               <div className="meter up"><i style={{ width: `${(m.strengthBase ?? 0) * 10}%` }} /></div>
@@ -313,7 +313,7 @@ function SetupCard({ m }: { m: MarketRow }) {
           </div>
         ) : (
           <div className="stack" style={{ gap: 4 }}>
-            <div className="small muted">Index COT commerciaux (3 ans)</div>
+            <div className="small muted">COT commercials index (3 years)</div>
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 30px", gap: 8, alignItems: "center" }}>
               <div className={`meter ${(m.cotIndex ?? 50) >= 70 ? "up" : (m.cotIndex ?? 50) <= 30 ? "down" : ""}`}>
                 <i style={{ width: `${m.cotIndex ?? 0}%` }} />
@@ -337,7 +337,7 @@ function SetupCard({ m }: { m: MarketRow }) {
           ))}
         </ul>
         <div style={{ marginTop: "auto", paddingTop: 10, borderTop: "1px solid var(--line)", display: "flex", justifyContent: "space-between" }}>
-          <span className="muted small">Score total</span>
+          <span className="muted small">Total score</span>
           <b className={`num ${m.total > 0 ? "up" : "down"}`}>{signed(m.total, 0)} / 5</b>
         </div>
       </div>

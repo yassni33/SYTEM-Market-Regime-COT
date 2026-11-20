@@ -11,5 +11,5 @@ export async function writeCache(sb: SupabaseClient, key: string, value: unknown
   const { error } = await sb
     .from("market_cache")
     .upsert({ key, data: value, updated_at: new Date().toISOString() });
-  return error ? `Sauvegarde cloud impossible (${error.message})` : null;
+  return error ? `Cloud save failed (${error.message})` : null;
 }

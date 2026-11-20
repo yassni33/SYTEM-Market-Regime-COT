@@ -1,13 +1,14 @@
 "use client";
-// Petits graphiques SVG faits maison (aucune librairie) : ligne, barres, radar, sparkline.
+// Small hand-made SVG charts (no library): line, bars, radar, sparkline. Colors come from the CSS variables.
 import { useEffect, useRef, useState } from "react";
 
-export const SERIES = ["#0D7A5F", "#3A6BC4"]; // vert sapin, bleu (validés daltonisme)
-const GRID = "#E2E7EC";
-const INK = "#677480";
-const UP = "#12955A";
-const DOWN = "#D23C48";
-const MARK = "#15202B"; // repères (retraits) : encre du texte, distincte des séries et des statuts
+export const SERIES = ["var(--accent)", "var(--series-2)"]; // blue + pink, validated for color blindness on the dark cards
+const GRID = "var(--line)";
+const INK = "var(--muted)";
+const UP = "var(--up)";
+const DOWN = "var(--down)";
+const MARK = "var(--text)"; // markers (withdrawals): text ink, distinct from series and status colors
+const RING = "var(--card)"; // surface-colored ring around points
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -58,8 +59,8 @@ function Tooltip({ tip }: { tip: Tip }) {
     <div
       style={{
         position: "absolute", left: tip.x, top: tip.y, transform: "translate(-50%, calc(-100% - 10px))",
-        background: "#15202B", color: "#fff", fontSize: 12, padding: "6px 9px", borderRadius: 6,
-        pointerEvents: "none", whiteSpace: "nowrap", zIndex: 5, boxShadow: "0 4px 12px rgba(0,0,0,.15)",
+        background: "var(--sidebar)", color: "var(--text)", border: "1px solid var(--line-strong)", fontSize: 12, padding: "6px 9px", borderRadius: 6,
+        pointerEvents: "none", whiteSpace: "nowrap", zIndex: 5, boxShadow: "var(--shadow)",
       }}
     >
       {tip.html}
@@ -67,12 +68,12 @@ function Tooltip({ tip }: { tip: Tip }) {
   );
 }
 
-// ---------- Courbes (une ou plusieurs séries, un seul axe) ----------
+// ---------- Lines (one or more series, one axis) ----------
 export function LineChart({
   labels,
   series,
   height = 240,
-  format = (v: number) => v.toLocaleString("fr-FR"),
+  format = (v: number) => v.toLocaleString("en-US"),
   formatLabel = (s: string) => s,
   zeroLine = true,
   area = false,
@@ -85,13 +86,13 @@ export function LineChart({
   formatLabel?: (s: string) => string;
   zeroLine?: boolean;
   area?: boolean;
-  // Petits repères posés sur la 1re série (ex. retraits sur la courbe d'équité)
+  // Small markers on the 1st series (e.g. withdrawals on the equity curve)
   markers?: { index: number; label: string }[];
 }) {
   const [ref, w] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const n = labels.length;
-  if (!n) return <div className="empty">Pas encore de données.</div>;
+  if (!n) return <div className="empty">No data yet.</div>;
   const all = series.flatMap((s) => s.data);
   let min = Math.min(...all), max = Math.max(...all);
   if (zeroLine) { min = Math.min(min, 0); max = Math.max(max, 0); }
@@ -155,7 +156,7 @@ export function LineChart({
             <g key={s.name}>
               {area && <path d={`${d}L${x(n - 1)},${y(Math.max(min, 0))}L${x(0)},${y(Math.max(min, 0))}Z`} fill={s.color} opacity={0.08} />}
               <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-              <circle cx={x(n - 1)} cy={y(s.data[n - 1])} r={3.5} fill={s.color} stroke="#fff" strokeWidth={2} />
+              <circle cx={x(n - 1)} cy={y(s.data[n - 1])} r={3.5} fill={s.color} stroke={RING} strokeWidth={2} />
             </g>
           );
         })}
@@ -169,7 +170,7 @@ export function LineChart({
                 key={k}
                 d={`M${cx - 5},${tip - 8}L${cx + 5},${tip - 8}L${cx},${tip}Z`}
                 fill={MARK}
-                stroke="#fff"
+                stroke={RING}
                 strokeWidth={1.5}
                 strokeLinejoin="round"
               />
@@ -179,7 +180,7 @@ export function LineChart({
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={T} y2={T + ih} stroke={INK} strokeWidth={1} opacity={0.4} />
             {series.map((s) => (
-              <circle key={s.name} cx={x(hover)} cy={y(s.data[hover])} r={4} fill={s.color} stroke="#fff" strokeWidth={2} />
+              <circle key={s.name} cx={x(hover)} cy={y(s.data[hover])} r={4} fill={s.color} stroke={RING} strokeWidth={2} />
             ))}
           </g>
         )}
@@ -190,12 +191,12 @@ export function LineChart({
   );
 }
 
-// ---------- Barres verticales (positif vert / négatif rouge) ----------
+// ---------- Vertical bars (positive green / negative red) ----------
 export function BarChart({
   labels,
   data,
   height = 220,
-  format = (v: number) => v.toLocaleString("fr-FR"),
+  format = (v: number) => v.toLocaleString("en-US"),
   formatLabel = (s: string) => s,
 }: {
   labels: string[];
@@ -207,7 +208,7 @@ export function BarChart({
   const [ref, w] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const n = data.length;
-  if (!n) return <div className="empty">Pas encore de données.</div>;
+  if (!n) return <div className="empty">No data yet.</div>;
   let min = Math.min(0, ...data), max = Math.max(0, ...data);
   if (min === max) max = 1;
   const L = 58, R = 8, T = 10, B = 26;
@@ -232,7 +233,7 @@ export function BarChart({
         };
   return (
     <div ref={ref} style={{ position: "relative", width: "100%" }}>
-      <svg width={w} height={height} role="img" aria-label="Graphique en barres" style={{ display: "block" }}>
+      <svg width={w} height={height} role="img" aria-label="Bar chart" style={{ display: "block" }}>
         {ticks.map((t) => (
           <g key={t}>
             <line x1={L} x2={w - R} y1={y(t)} y2={y(t)} stroke={GRID} strokeDasharray={t === 0 ? undefined : "3 3"} />
@@ -244,7 +245,7 @@ export function BarChart({
           const top = y(Math.max(0, v)), bot = y(Math.min(0, v));
           const h = Math.max(1, bot - top);
           const r = Math.min(4, bw / 2, h);
-          // Bout arrondi côté valeur, base carrée sur la ligne zéro
+          // Rounded end on the value side, square base on the zero line
           const d =
             v >= 0
               ? `M${x0},${bot}V${top + r}Q${x0},${top} ${x0 + r},${top}H${x0 + bw - r}Q${x0 + bw},${top} ${x0 + bw},${top + r}V${bot}Z`
@@ -272,12 +273,12 @@ export function BarChart({
 // ---------- Barres horizontales (classements) ----------
 export function HBars({
   rows,
-  format = (v: number) => v.toLocaleString("fr-FR"),
+  format = (v: number) => v.toLocaleString("en-US"),
 }: {
   rows: { label: string; value: number; sub?: string }[];
   format?: (v: number) => string;
 }) {
-  if (!rows.length) return <div className="empty">Pas encore de données.</div>;
+  if (!rows.length) return <div className="empty">No data yet.</div>;
   const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1e-9);
   const hasNeg = rows.some((r) => r.value < 0);
   return (
@@ -287,7 +288,7 @@ export function HBars({
         return (
           <div key={r.label} style={{ display: "grid", gridTemplateColumns: "minmax(70px, 120px) minmax(0, 1fr) 90px", gap: 10, alignItems: "center" }} title={r.sub}>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
-            <div style={{ position: "relative", height: 10, background: "var(--neutral-soft)", borderRadius: 4 }}>
+            <div style={{ position: "relative", height: 10, background: "var(--input)", borderRadius: 4 }}>
               {hasNeg && <div style={{ position: "absolute", left: "50%", top: -2, bottom: -2, width: 1, background: "var(--line-strong)" }} />}
               <div
                 style={{
@@ -316,7 +317,7 @@ export function Radar({ axes, size = 260 }: { axes: { label: string; value: numb
   };
   const poly = axes.map((a, i) => pt(i, Math.max(0, Math.min(100, a.value))).join(",")).join(" ");
   return (
-    <svg width="100%" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size, display: "block", margin: "0 auto" }} role="img" aria-label="Radar du Edge score">
+    <svg width="100%" viewBox={`-48 0 ${size + 96} ${size}`} style={{ maxWidth: size + 96, display: "block", margin: "0 auto" }} role="img" aria-label="Edge score radar">
       {[25, 50, 75, 100].map((r) => (
         <polygon key={r} points={axes.map((_, i) => pt(i, r).join(",")).join(" ")} fill="none" stroke={GRID} />
       ))}
@@ -327,7 +328,7 @@ export function Radar({ axes, size = 260 }: { axes: { label: string; value: numb
       <polygon points={poly} fill={SERIES[0]} fillOpacity={0.18} stroke={SERIES[0]} strokeWidth={2} strokeLinejoin="round" />
       {axes.map((a, i) => {
         const [x, y] = pt(i, Math.max(0, Math.min(100, a.value)));
-        return <circle key={i} cx={x} cy={y} r={3.5} fill={SERIES[0]} stroke="#fff" strokeWidth={1.5}><title>{`${a.label} : ${Math.round(a.value)}/100`}</title></circle>;
+        return <circle key={i} cx={x} cy={y} r={3.5} fill={SERIES[0]} stroke={RING} strokeWidth={1.5}><title>{`${a.label}: ${Math.round(a.value)}/100`}</title></circle>;
       })}
       {axes.map((a, i) => {
         const [x, y] = pt(i, 122);
@@ -341,7 +342,7 @@ export function Radar({ axes, size = 260 }: { axes: { label: string; value: numb
   );
 }
 
-// Barre 0-100 colorée selon des seuils (index COT, % saisonnier…)
+// 0-100 bar colored by thresholds (COT index, seasonal %…)
 export function ScoreBar({ value, hi = 70, lo = 30, max = 100 }: { value: number | null | undefined; hi?: number; lo?: number; max?: number }) {
   if (value == null || !isFinite(value)) return <span className="faint">—</span>;
   const cls = value >= hi ? "up" : value <= lo ? "down" : "";

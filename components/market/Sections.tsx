@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import type { Analysis, MarketRow } from "@/lib/analysis";
-import { MONTHS_FR } from "@/lib/markets";
+import { MONTHS } from "@/lib/markets";
 import { compact, dateFr, num, pct, signed } from "@/lib/format";
 import { LineChart, ScoreBar, SERIES } from "@/components/charts";
 import { BiasTag, SignalDot, Step } from "./ui";
@@ -13,28 +13,28 @@ export function CotSection({ a }: { a: Analysis }) {
   if (!a.cot.length)
     return (
       <section className="card">
-        <Step n={4} title="Index COT" />
-        <div className="empty">Rapport COT indisponible pour le moment.</div>
+        <Step n={4} title="COT index" />
+        <div className="empty">COT report unavailable right now.</div>
       </section>
     );
   return (
     <section className="card">
       <Step
         n={4}
-        title="Index COT"
-        sub="Index = (net actuel − plus bas) / (plus haut − plus bas) × 100. Commerciaux ≥ 70 = acheteurs extrêmes, ≤ 30 = vendeurs extrêmes."
-        right={<span className="small muted">Rapport CFTC du {dateFr(a.meta.cotReport)}</span>}
+        title="COT index"
+        sub="Index = (current net − lowest) / (highest − lowest) × 100. Commercials ≥ 70 = extreme buyers, ≤ 30 = extreme sellers."
+        right={<span className="small muted">CFTC report of {dateFr(a.meta.cotReport)}</span>}
       />
       <div className="tbl-wrap">
         <table className="tbl">
           <thead>
             <tr>
-              <th>Marché</th>
-              <th>Commerciaux 3 ans</th>
-              <th className="r">Comm. 6 mois</th>
-              <th className="r">Spéc. 3 ans</th>
-              <th className="r">Net spéculateurs</th>
-              <th className="r">Variation semaine</th>
+              <th>Market</th>
+              <th>Commercials 3y</th>
+              <th className="r">Comm. 6m</th>
+              <th className="r">Specs 3y</th>
+              <th className="r">Specs net</th>
+              <th className="r">Weekly change</th>
             </tr>
           </thead>
           <tbody>
@@ -58,10 +58,10 @@ export function CotSection({ a }: { a: Analysis }) {
         <div className="card-b" style={{ borderTop: "1px solid var(--line)" }}>
           <div className="row" style={{ justifyContent: "space-between", marginBottom: 10 }}>
             <div>
-              <h3>Positions nettes sur 52 semaines</h3>
+              <h3>Net positions over 52 weeks</h3>
               <div className="row small muted" style={{ marginTop: 4, gap: 14 }}>
-                <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 3, background: SERIES[0], borderRadius: 2 }} />Commerciaux</span>
-                <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 3, background: SERIES[1], borderRadius: 2 }} />Grands spéculateurs</span>
+                <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 3, background: SERIES[0], borderRadius: 2 }} />Commercials</span>
+                <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 3, background: SERIES[1], borderRadius: 2 }} />Large speculators</span>
               </div>
             </div>
             <select id="cot-market" className="input" style={{ width: "auto" }} value={sel} onChange={(e) => setSel(e.target.value)}>
@@ -71,8 +71,8 @@ export function CotSection({ a }: { a: Analysis }) {
           <LineChart
             labels={cur.history.map((h) => h.d)}
             series={[
-              { name: "Commerciaux", data: cur.history.map((h) => h.comm), color: SERIES[0] },
-              { name: "Grands spéculateurs", data: cur.history.map((h) => h.spec), color: SERIES[1] },
+              { name: "Commercials", data: cur.history.map((h) => h.comm), color: SERIES[0] },
+              { name: "Large speculators", data: cur.history.map((h) => h.spec), color: SERIES[1] },
             ]}
             format={(v) => compact(v)}
             formatLabel={(d) => dateFr(d, { day: "numeric", month: "short", year: "2-digit" })}
@@ -87,11 +87,11 @@ export function CotSection({ a }: { a: Analysis }) {
 // ---------- Étape 5 : saisonnalité ----------
 function heatColor(p: number | null) {
   if (p == null) return { bg: "transparent", fg: "var(--faint)" };
-  if (p >= 80) return { bg: "#12955A", fg: "#fff" };
-  if (p >= 65) return { bg: "#BFE5D0", fg: "#0B5E39" };
-  if (p <= 20) return { bg: "#D23C48", fg: "#fff" };
-  if (p <= 35) return { bg: "#F5C9CD", fg: "#8E1F29" };
-  return { bg: "var(--neutral-soft)", fg: "var(--muted)" };
+  if (p >= 80) return { bg: "var(--up)", fg: "var(--on-status)" };
+  if (p >= 65) return { bg: "var(--up-soft)", fg: "var(--up)" };
+  if (p <= 20) return { bg: "var(--down)", fg: "var(--on-status)" };
+  if (p <= 35) return { bg: "var(--down-soft)", fg: "var(--down)" };
+  return { bg: "var(--input)", fg: "var(--muted)" };
 }
 
 export function SeasonSection({ a }: { a: Analysis }) {
@@ -101,10 +101,10 @@ export function SeasonSection({ a }: { a: Analysis }) {
     <section className="card">
       <Step
         n={5}
-        title="Saisonnalité"
-        sub="% des 10 dernières années où le mois a fini en hausse. Survole une case pour la variation moyenne."
+        title="Seasonality"
+        sub="% of the last 10 years in which the month closed up. Hover a cell for the average change."
         right={
-          <div className="seg" role="group" aria-label="Filtre">
+          <div className="seg" role="group" aria-label="Filter">
             <button className={kind === "fx" ? "on" : ""} onClick={() => setKind("fx")}>Forex</button>
             <button className={kind === "index" ? "on" : ""} onClick={() => setKind("index")}>Indices</button>
           </div>
@@ -114,8 +114,8 @@ export function SeasonSection({ a }: { a: Analysis }) {
         <table className="tbl" style={{ borderCollapse: "separate", borderSpacing: 2 }}>
           <thead>
             <tr>
-              <th style={{ position: "sticky", left: 0 }}>Marché</th>
-              {MONTHS_FR.map((mo, i) => (
+              <th style={{ position: "sticky", left: 0 }}>Market</th>
+              {MONTHS.map((mo, i) => (
                 <th key={mo} className="c" style={i === a.currentMonth ? { color: "var(--accent)", fontWeight: 700 } : undefined}>{mo}</th>
               ))}
             </tr>
@@ -131,7 +131,7 @@ export function SeasonSection({ a }: { a: Analysis }) {
                     <td
                       key={i}
                       className="c num"
-                      title={m.pct == null ? "Pas assez d’historique" : `${r.symbol} en ${MONTHS_FR[i]} : hausse ${num(m.pct, 0)} % du temps sur ${m.n} ans, variation moyenne ${pct(m.avg)}`}
+                      title={m.pct == null ? "Not enough history" : `${r.symbol} in ${MONTHS[i]}: up ${num(m.pct, 0)}% of the time over ${m.n} years, average change ${pct(m.avg)}`}
                       style={{
                         background: c.bg, color: c.fg, padding: "5px 4px", minWidth: 44, borderRadius: 4, borderBottom: 0, fontSize: 12,
                         outline: cur ? "2px solid var(--text)" : undefined, outlineOffset: cur ? -2 : undefined,
@@ -147,11 +147,11 @@ export function SeasonSection({ a }: { a: Analysis }) {
         </table>
       </div>
       <div className="card-b row small muted" style={{ gap: 14, borderTop: "1px solid var(--line)" }}>
-        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "#12955A", borderRadius: 3 }} />≥ 80 %</span>
-        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "#BFE5D0", borderRadius: 3 }} />≥ 65 % (haussier)</span>
-        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "#F5C9CD", borderRadius: 3 }} />≤ 35 % (baissier)</span>
-        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "#D23C48", borderRadius: 3 }} />≤ 20 %</span>
-        <span>Case encadrée = mois en cours</span>
+        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "var(--up)", borderRadius: 3 }} />≥ 80%</span>
+        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "var(--up-soft)", border: "1px solid var(--up)", borderRadius: 3 }} />≥ 65% (bullish)</span>
+        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "var(--down-soft)", border: "1px solid var(--down)", borderRadius: 3 }} />≤ 35% (bearish)</span>
+        <span className="row" style={{ gap: 6 }}><i style={{ width: 12, height: 12, background: "var(--down)", borderRadius: 3 }} />≤ 20%</span>
+        <span>Outlined cell = current month</span>
       </div>
     </section>
   );
@@ -198,13 +198,13 @@ export function Watchlist({ a }: { a: Analysis }) {
     </th>
   );
 
-  const FILTERS: [Filter, string][] = [["all", "Tout"], ["fx", "Forex"], ["index", "Indices"], ["ab", "A/B seulement"], ["usd", "Paires USD"]];
+  const FILTERS: [Filter, string][] = [["all", "All"], ["fx", "Forex"], ["index", "Indices"], ["ab", "A/B only"], ["usd", "USD pairs"]];
   return (
     <section className="card">
       <Step
         n={6}
-        title="Watchlist complète"
-        sub="Clique sur un en-tête pour trier. Points : F force · C COT · O open levels · S saisonnalité · M macro · T tendance."
+        title="Full watchlist"
+        sub="Click a header to sort. Squares: St strength · C COT · O open levels · Se seasonality · M macro · T trend."
         right={
           <div className="row">
             {FILTERS.map(([k, l]) => (
@@ -217,16 +217,16 @@ export function Watchlist({ a }: { a: Analysis }) {
         <table className="tbl">
           <thead>
             <tr>
-              {th("symbol", "Marché")}
-              <th>Biais</th>
-              {th("grade", "Note", "c")}
+              {th("symbol", "Market")}
+              <th>Bias</th>
+              {th("grade", "Grade", "c")}
               {th("total", "Score", "r")}
-              <th>Signaux</th>
+              <th>Signals</th>
               <th className="c">NR</th>
               {th("opensAbove", "Open ↑", "c")}
-              {th("seasonAvg", "Moy. mois", "r")}
-              {th("ch1w", "1 sem.", "r")}
-              {th("price", "Prix", "r")}
+              {th("seasonAvg", "Month avg", "r")}
+              {th("ch1w", "1 week", "r")}
+              {th("price", "Price", "r")}
             </tr>
           </thead>
           <tbody>
@@ -246,7 +246,7 @@ export function Watchlist({ a }: { a: Analysis }) {
             ))}
           </tbody>
         </table>
-        {!rows.length && <div className="empty">Aucun marché pour ce filtre.</div>}
+        {!rows.length && <div className="empty">No market matches this filter.</div>}
       </div>
     </section>
   );

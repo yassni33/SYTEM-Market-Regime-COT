@@ -6,7 +6,7 @@ import { money, num } from "@/lib/format";
 
 type Instrument = "fx" | "gold" | "index";
 const parse = (s: string) => {
-  const v = Number(s.replace(/\s/g, "").replace(",", "."));
+  const v = Number(s.replace(/[\s,]/g, "")); // English input: "100,000" = 100000, dot for decimals
   return isFinite(v) ? v : NaN;
 };
 
@@ -44,7 +44,7 @@ export default function RiskCalculator() {
         setUsdPer(u);
         setPrices(p);
       })
-      .catch((e) => setRateErr(`Taux de change indisponibles (${e.message}). Les calculs hors USD sont désactivés.`));
+      .catch((e) => setRateErr(`Exchange rates unavailable (${e.message}). Non-USD calculations are disabled.`));
   }, []);
 
   // Pré-remplir le prix d'entrée avec le dernier prix connu
@@ -59,7 +59,7 @@ export default function RiskCalculator() {
     const quote = instrument === "fx" ? pair.slice(3) : "USD";
     // Valeur d'un pip pour 1 lot standard, dans la devise de cotation
     let pipValueLot: number;
-    if (instrument === "index") pipValueLot = parse(pointValue); // déjà dans la devise du compte
+    if (instrument === "index") pipValueLot = parse(pointValue); // already in the account currency
     else {
       const raw = instrument === "fx" ? pip * 100000 : 0.1 * 100; // or : 100 onces
       if (quote === acct) pipValueLot = raw;
@@ -96,29 +96,29 @@ export default function RiskCalculator() {
     <div className="stack" style={{ gap: 18 }}>
       <div className="page-head">
         <div>
-          <h1>Calculateur de risque</h1>
-          <p>La bonne taille de lot pour ne jamais risquer plus que prévu. Lot arrondi à 0,01 vers le bas.</p>
+          <h1>Risk calculator</h1>
+          <p>The right lot size so you never risk more than planned. Lot size rounded down to 0.01.</p>
         </div>
       </div>
       {rateErr && <div className="notice">{rateErr}</div>}
 
       <div className="grid split">
         <section className="card">
-          <div className="card-h"><h2>Paramètres</h2></div>
+          <div className="card-h"><h2>Settings</h2></div>
           <div className="card-b stack">
             <div className="form-grid">
               <label className="field">
-                <span>Solde du compte</span>
+                <span>Account balance</span>
                 <input id="r-balance" className="input num" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} />
               </label>
               <label className="field">
-                <span>Devise du compte</span>
+                <span>Account currency</span>
                 <select id="r-acct" className="input" value={acct} onChange={(e) => setAcct(e.target.value)}>
                   {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </label>
               <div className="field">
-                <span>Risque</span>
+                <span>Risk</span>
                 <div className="row" style={{ flexWrap: "nowrap" }}>
                   <div className="seg">
                     <button className={riskMode === "pct" ? "on" : ""} onClick={() => setRiskMode("pct")}>%</button>
@@ -133,14 +133,14 @@ export default function RiskCalculator() {
               <label className="field">
                 <span>Instrument</span>
                 <select id="r-instrument" className="input" value={instrument} onChange={(e) => setInstrument(e.target.value as Instrument)}>
-                  <option value="fx">Paire forex</option>
-                  <option value="gold">Or (XAUUSD)</option>
-                  <option value="index">Indice (valeur manuelle)</option>
+                  <option value="fx">Forex pair</option>
+                  <option value="gold">Gold (XAUUSD)</option>
+                  <option value="index">Index (manual value)</option>
                 </select>
               </label>
               {instrument === "fx" && (
                 <label className="field">
-                  <span>Paire</span>
+                  <span>Pair</span>
                   <select id="r-pair" className="input mono" value={pair} onChange={(e) => { setPair(e.target.value); setEntry(""); }}>
                     {FX_PAIRS.map((p) => <option key={p.symbol}>{p.symbol}</option>)}
                   </select>
@@ -148,12 +148,12 @@ export default function RiskCalculator() {
               )}
               {instrument === "index" && (
                 <label className="field">
-                  <span>Valeur d’1 point pour 1 lot ({acct})</span>
+                  <span>Value of 1 point per lot ({acct})</span>
                   <input id="r-point" className="input num" inputMode="decimal" value={pointValue} onChange={(e) => setPointValue(e.target.value)} />
                 </label>
               )}
               {instrument === "gold" && (
-                <div className="field"><span>Contrat</span><div className="small muted" style={{ paddingTop: 8 }}>1 lot = 100 onces · 1 pip = 0,10 $</div></div>
+                <div className="field"><span>Contract</span><div className="small muted" style={{ paddingTop: 8 }}>1 lot = 100 oz · 1 pip = $0.10</div></div>
               )}
             </div>
 
@@ -161,29 +161,29 @@ export default function RiskCalculator() {
               <div className="field">
                 <span>Stop loss</span>
                 <div className="seg">
-                  <button className={slMode === "pips" ? "on" : ""} onClick={() => setSlMode("pips")}>En {unit}</button>
-                  <button className={slMode === "price" ? "on" : ""} onClick={() => setSlMode("price")}>Par prix</button>
+                  <button className={slMode === "pips" ? "on" : ""} onClick={() => setSlMode("pips")}>In {unit}</button>
+                  <button className={slMode === "price" ? "on" : ""} onClick={() => setSlMode("price")}>By price</button>
                 </div>
               </div>
               {slMode === "pips" ? (
                 <label className="field">
-                  <span>Distance du SL ({unit})</span>
+                  <span>SL distance ({unit})</span>
                   <input id="r-slpips" className="input num" inputMode="decimal" value={slPips} onChange={(e) => setSlPips(e.target.value)} />
                 </label>
               ) : (
                 <>
                   <label className="field">
-                    <span>Prix d’entrée</span>
+                    <span>Entry price</span>
                     <input id="r-entry" className="input num" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} />
                   </label>
                   <label className="field">
-                    <span>Prix du SL</span>
+                    <span>SL price</span>
                     <input id="r-slprice" className="input num" inputMode="decimal" value={slPrice} onChange={(e) => setSlPrice(e.target.value)} />
                   </label>
                 </>
               )}
               <label className="field">
-                <span>Ratio TP (R)</span>
+                <span>TP ratio (R)</span>
                 <input id="r-ratio" className="input num" inputMode="decimal" value={ratio} onChange={(e) => setRatio(e.target.value)} />
               </label>
             </div>
@@ -193,19 +193,19 @@ export default function RiskCalculator() {
         <section className="card" style={{ alignSelf: "start", borderTop: "4px solid var(--accent)" }}>
           <div className="card-b stack">
             <div>
-              <div className="label">Taille de lot</div>
+              <div className="label">Lot size</div>
               <div className="num" style={{ fontSize: 40, fontWeight: 600, lineHeight: 1.1, color: "var(--accent)" }}>
                 {r.ok ? num(r.lots, 2) : "—"}
               </div>
-              {r.tooSmall && <div className="small down">Risque trop petit pour 0,01 lot avec ce stop.</div>}
+              {r.tooSmall && <div className="small down">Risk too small for 0.01 lot with this stop.</div>}
             </div>
             {[
-              ["Argent risqué", money(r.ok ? r.risked : NaN, acct), "down"],
-              ["Gain au TP", money(r.ok ? r.gain : NaN, acct), "up"],
-              ["Valeur du pip (pour ce lot)", money(r.ok ? r.pipValue : NaN, acct), ""],
-              ["Valeur du pip (1 lot)", money(r.pipValueLot, acct), ""],
-              ["Risque visé", money(r.riskMoney, acct), ""],
-              ["Distance du SL", isFinite(r.dist) ? `${num(r.dist, 1)} ${unit}` : "—", ""],
+              ["Money at risk", money(r.ok ? r.risked : NaN, acct), "down"],
+              ["Profit at TP", money(r.ok ? r.gain : NaN, acct), "up"],
+              ["Pip value (this lot size)", money(r.ok ? r.pipValue : NaN, acct), ""],
+              ["Pip value (1 lot)", money(r.pipValueLot, acct), ""],
+              ["Target risk", money(r.riskMoney, acct), ""],
+              ["SL distance", isFinite(r.dist) ? `${num(r.dist, 1)} ${unit}` : "—", ""],
             ].map(([l, v, t]) => (
               <div key={l} className="row" style={{ justifyContent: "space-between", borderBottom: "1px solid var(--line)", paddingBottom: 8 }}>
                 <span className="muted">{l}</span>
@@ -214,13 +214,13 @@ export default function RiskCalculator() {
             ))}
             {r.tpPrice != null && (
               <div className="row" style={{ justifyContent: "space-between" }}>
-                <span className="muted">Prix du TP ({r.direction})</span>
+                <span className="muted">TP price ({r.direction})</span>
                 <b className="num">{num(r.tpPrice, dec)}</b>
               </div>
             )}
             <p className="small muted">
-              L’argent risqué peut être un peu sous ton risque visé car le lot est arrondi vers le bas. Vérifie la valeur du
-              pip chez ton broker (taille de contrat, commissions).
+              Money at risk can be slightly below your target risk because the lot size is rounded down. Check the pip
+              value with your broker (contract size, commissions).
             </p>
           </div>
         </section>

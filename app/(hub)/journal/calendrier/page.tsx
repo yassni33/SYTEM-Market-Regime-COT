@@ -6,9 +6,9 @@ import { useJournal } from "@/components/journal/useJournal";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { tradeDay, type Trade } from "@/lib/journal";
 import { dayKey, money, signedMoney } from "@/lib/format";
-import { MONTHS_FR_LONG } from "@/lib/markets";
+import { MONTHS_LONG } from "@/lib/markets";
 
-const WEEKDAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function PnlCalendar() {
   const j = useJournal();
@@ -66,8 +66,8 @@ export default function PnlCalendar() {
     <div className="stack" style={{ gap: 18 }}>
       <div className="page-head">
         <div>
-          <h1>Calendrier P&L</h1>
-          <p>Ton résultat jour par jour. Clique sur un jour pour voir les trades et écrire la note du jour.</p>
+          <h1>P&L calendar</h1>
+          <p>Your result day by day. Click a day to see its trades and write the daily note.</p>
         </div>
         <AccountSelect j={j} />
       </div>
@@ -76,11 +76,11 @@ export default function PnlCalendar() {
         <section className="card" style={{ minWidth: 0 }}>
           <div className="card-h">
             <div className="row">
-              <button className="btn btn-sm" onClick={() => shift(-1)} aria-label="Mois précédent">←</button>
+              <button className="btn btn-sm" onClick={() => shift(-1)} aria-label="Previous month">←</button>
               <h2 style={{ minWidth: 150, textAlign: "center", textTransform: "capitalize" }}>
-                {MONTHS_FR_LONG[month.getMonth()]} {month.getFullYear()}
+                {MONTHS_LONG[month.getMonth()]} {month.getFullYear()}
               </h2>
-              <button className="btn btn-sm" onClick={() => shift(1)} aria-label="Mois suivant">→</button>
+              <button className="btn btn-sm" onClick={() => shift(1)} aria-label="Next month">→</button>
             </div>
             <div className="row">
               <span className="muted small">{monthTrades.length} trades</span>
@@ -89,7 +89,7 @@ export default function PnlCalendar() {
           </div>
           <div className="tbl-wrap">
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(78px, 1fr)) minmax(88px, 1fr)", gap: 4, padding: 10, minWidth: 700 }}>
-              {[...WEEKDAYS, "Semaine"].map((d) => (
+              {[...WEEKDAYS, "Week"].map((d) => (
                 <div key={d} className="label" style={{ textAlign: "center", padding: "2px 0 6px" }}>{d}</div>
               ))}
               {weeks.map((w, wi) => {
@@ -115,7 +115,7 @@ export default function PnlCalendar() {
                         >
                           <div className="row" style={{ justifyContent: "space-between", width: "100%" }}>
                             <span className="small num" style={{ fontWeight: k === today ? 700 : 400, color: k === today ? "var(--accent)" : "var(--muted)" }}>{d.getDate()}</span>
-                            {notes[k] && <span title="Note du jour" style={{ width: 6, height: 6, borderRadius: 3, background: "var(--accent)" }} />}
+                            {notes[k] && <span title="Daily note" style={{ width: 6, height: 6, borderRadius: 3, background: "var(--accent)" }} />}
                           </div>
                           {ts.length > 0 && (
                             <>
@@ -127,7 +127,7 @@ export default function PnlCalendar() {
                       );
                     })}
                     <div style={{ padding: 8, borderRadius: 8, background: "var(--bg)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                      <span className="small muted">Sem. {wi + 1}</span>
+                      <span className="small muted">Week {wi + 1}</span>
                       <span className={`num ${wp > 0 ? "up" : wp < 0 ? "down" : "muted"}`} style={{ fontWeight: 600 }}>{weekTrades.length ? signedMoney(wp, ccy, 0) : "—"}</span>
                       <span className="small muted">{weekTrades.length ? `${weekTrades.length} trades` : ""}</span>
                     </div>
@@ -182,18 +182,18 @@ function DayPanel({
 
   async function save() {
     const { error } = await supabaseBrowser().from("day_notes").upsert({ day, note: text });
-    if (error) return setStatus(`Erreur : ${error.message}`);
+    if (error) return setStatus(`Error: ${error.message}`);
     onNote(text);
-    setStatus("Note enregistrée");
+    setStatus("Note saved");
   }
   const p = trades.reduce((s, t) => s + t.pnl, 0);
   return (
     <aside className="card" style={{ alignSelf: "start" }}>
       <div className="card-h">
         <h2 style={{ textTransform: "capitalize" }}>
-          {new Date(day + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+          {new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
         </h2>
-        <button className="btn btn-sm" onClick={onClose}>Fermer</button>
+        <button className="btn btn-sm" onClick={onClose}>Close</button>
       </div>
       <div className="card-b stack">
         <div className="row" style={{ justifyContent: "space-between" }}>
@@ -207,12 +207,12 @@ function DayPanel({
           </button>
         ))}
         <label className="field">
-          <span>Note du jour</span>
-          <textarea id="day-note" className="input" rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder="Comment s’est passée la journée ? Respect du plan, état d’esprit, leçon du jour…" />
+          <span>Daily note</span>
+          <textarea id="day-note" className="input" rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder="How did the day go? Did you follow the plan? Mindset, lesson of the day…" />
         </label>
         <div className="row" style={{ justifyContent: "space-between" }}>
           <span className="small muted">{status}</span>
-          <button className="btn btn-primary" onClick={save}>Enregistrer la note</button>
+          <button className="btn btn-primary" onClick={save}>Save note</button>
         </div>
       </div>
     </aside>

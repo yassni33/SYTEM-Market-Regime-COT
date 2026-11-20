@@ -70,16 +70,16 @@ async function yahooChart(symbol: string, range: string, interval: string): Prom
       const res = await fetchWithTimeout(host + path, 15000, {
         headers: { "User-Agent": UA, Accept: "application/json" },
       });
-      if (!res.ok) throw new Error(`Yahoo ${symbol} : HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`Yahoo ${symbol}: HTTP ${res.status}`);
       const json = await res.json();
       const r = json?.chart?.result?.[0];
-      if (!r) throw new Error(`Yahoo ${symbol} : réponse vide`);
+      if (!r) throw new Error(`Yahoo ${symbol}: empty response`);
       return r as YahooChart;
     } catch (e) {
       lastErr = e;
     }
   }
-  throw lastErr instanceof Error ? lastErr : new Error(`Yahoo ${symbol} : échec`);
+  throw lastErr instanceof Error ? lastErr : new Error(`Yahoo ${symbol}: request failed`);
 }
 
 function localDate(ts: number, offset: number): string {
@@ -160,7 +160,7 @@ export async function fetchCot(): Promise<RawCot> {
     $limit: "10000",
   });
   const res = await fetchWithTimeout(`https://publicreporting.cftc.gov/resource/6dca-aqww.json?${params}`, 20000);
-  if (!res.ok) throw new Error(`CFTC : HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`CFTC: HTTP ${res.status}`);
   const json = (await res.json()) as Record<string, string>[];
   const byCode: Record<string, string> = {};
   for (const [k, v] of Object.entries(COT_CODES)) byCode[v] = k;
@@ -185,7 +185,7 @@ export async function fetchCot(): Promise<RawCot> {
     const m = new Map(rows[k].map((r) => [r.d, r]));
     rows[k] = [...m.values()].sort((a, b) => (a.d < b.d ? -1 : 1));
   }
-  if (!latest) throw new Error("CFTC : aucune donnée reçue");
+  if (!latest) throw new Error("CFTC: no data received");
   return { fetchedAt: new Date().toISOString(), latestReport: latest, rows };
 }
 
@@ -193,14 +193,14 @@ export async function fetchCalendar(): Promise<RawCalendar> {
   const res = await fetchWithTimeout("https://nfs.faireconomy.media/ff_calendar_thisweek.json", 15000, {
     headers: { "User-Agent": UA, Accept: "application/json" },
   });
-  if (!res.ok) throw new Error(`ForexFactory : HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`ForexFactory: HTTP ${res.status}`);
   const text = await res.text();
   let events: FfEvent[];
   try {
     events = JSON.parse(text);
   } catch {
-    throw new Error("ForexFactory : réponse illisible (limite de requêtes atteinte ?)");
+    throw new Error("ForexFactory: unreadable response (request limit reached?)");
   }
-  if (!Array.isArray(events)) throw new Error("ForexFactory : format inattendu");
+  if (!Array.isArray(events)) throw new Error("ForexFactory: unexpected format");
   return { fetchedAt: new Date().toISOString(), events };
 }

@@ -17,8 +17,8 @@ export default function LoginPage() {
     if (error) {
       setError(
         error.message.includes("Invalid login")
-          ? "E-mail ou mot de passe incorrect."
-          : `Connexion impossible : ${error.message}`,
+          ? "Wrong email or password."
+          : `Sign-in failed: ${error.message}`,
       );
       setBusy(false);
       return;
@@ -33,25 +33,25 @@ export default function LoginPage() {
           <div className="brand" style={{ padding: 0 }}>
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true">
-                <path d="M5 22l7-7 5 5 10-11" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 22l7-7 5 5 10-11" fill="none" stroke="var(--on-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <div>
               <BrandName />
-              <div className="brand-sub">Espace privé</div>
+              <div className="brand-sub">Private space</div>
             </div>
           </div>
           <label className="field">
-            <span>E-mail</span>
+            <span>Email</span>
             <input id="email" className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </label>
           <label className="field">
-            <span>Mot de passe</span>
+            <span>Password</span>
             <input id="password" className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
           {error && <div className="notice err">{error}</div>}
           <button className="btn btn-primary" disabled={busy}>
-            {busy ? "Connexion…" : "Se connecter"}
+            {busy ? "Signing in…" : "Sign in"}
           </button>
         </div>
       </form>

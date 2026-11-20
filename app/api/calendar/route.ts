@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const {
     data: { user },
   } = await sb.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Connexion requise" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Sign-in required" }, { status: 401 });
 
   const refresh = req.nextUrl.searchParams.get("refresh") === "1";
   let cal = await readCache<RawCalendar>(sb, "calendar");
@@ -30,6 +30,6 @@ export async function GET(req: NextRequest) {
       error = e instanceof Error ? e.message : String(e);
     }
   }
-  if (!cal) return NextResponse.json({ error: error ?? "Calendrier indisponible" }, { status: 503 });
+  if (!cal) return NextResponse.json({ error: error ?? "Calendar unavailable" }, { status: 503 });
   return NextResponse.json({ ...cal, error });
 }

@@ -4,14 +4,14 @@ import { ACCOUNT_TYPES, computeCashflow, TX_TYPES, type Transaction } from "@/li
 import { dateFr, money, signedMoney } from "@/lib/format";
 import type { Journal } from "./useJournal";
 
-// Onglet « Mouvements » : solde de chaque compte + liste des retraits, dépôts et payouts.
+// "Transactions" tab: balance of each account + list of withdrawals, deposits and payouts.
 export default function Movements({ j, onEdit }: { j: Journal; onEdit: (t: Transaction) => void }) {
   const shown = j.accounts.filter((a) => j.accountId === "all" || a.id === j.accountId);
   const accById = Object.fromEntries(j.accounts.map((a) => [a.id, a]));
 
   async function remove(t: Transaction) {
     const acc = accById[t.account_id];
-    if (!window.confirm(`Supprimer ce ${TX_TYPES[t.type].toLowerCase()} de ${money(t.amount, acc?.currency)} du ${dateFr(t.date)} ?`)) return;
+    if (!window.confirm(`Delete this ${TX_TYPES[t.type].toLowerCase()} of ${money(t.amount, acc?.currency)} on ${dateFr(t.date)}?`)) return;
     const { error } = await supabaseBrowser().from("account_transactions").delete().eq("id", t.id);
     if (error) return window.alert(error.message);
     j.reload();
@@ -22,21 +22,21 @@ export default function Movements({ j, onEdit }: { j: Journal; onEdit: (t: Trans
       <section className="card">
         <div className="card-h">
           <div>
-            <h2>Solde par compte</h2>
-            <p>Solde = départ + dépôts − retraits − payouts + P&L des trades</p>
+            <h2>Balance by account</h2>
+            <p>Balance = starting balance + deposits − withdrawals − payouts + trade P&L</p>
           </div>
         </div>
         <div className="tbl-wrap">
           <table className="tbl">
             <thead>
               <tr>
-                <th>Compte</th>
-                <th className="r">Départ</th>
-                <th className="r">Dépôts</th>
-                <th className="r">Retraits</th>
+                <th>Account</th>
+                <th className="r">Starting</th>
+                <th className="r">Deposits</th>
+                <th className="r">Withdrawals</th>
                 <th className="r">Payouts</th>
-                <th className="r">P&L trades</th>
-                <th className="r">Solde actuel</th>
+                <th className="r">Trade P&L</th>
+                <th className="r">Current balance</th>
               </tr>
             </thead>
             <tbody>
@@ -62,15 +62,15 @@ export default function Movements({ j, onEdit }: { j: Journal; onEdit: (t: Trans
               })}
             </tbody>
           </table>
-          {!shown.length && <div className="empty">Aucun compte. Crée-en un avec le bouton « Comptes ».</div>}
+          {!shown.length && <div className="empty">No accounts. Create one with the Accounts button.</div>}
         </div>
       </section>
 
       <section className="card">
         <div className="card-h">
           <div>
-            <h2>Retraits et dépôts</h2>
-            <p>Ces mouvements changent le solde, jamais tes stats de trading.</p>
+            <h2>Withdrawals and deposits</h2>
+            <p>These change the balance, never your trading stats.</p>
           </div>
         </div>
         {j.txError ? (
@@ -81,9 +81,9 @@ export default function Movements({ j, onEdit }: { j: Journal; onEdit: (t: Trans
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Compte</th>
+                  <th>Account</th>
                   <th>Type</th>
-                  <th className="r">Montant</th>
+                  <th className="r">Amount</th>
                   <th>Note</th>
                   <th className="r">Actions</th>
                 </tr>
@@ -106,8 +106,8 @@ export default function Movements({ j, onEdit }: { j: Journal; onEdit: (t: Trans
                       <td style={{ whiteSpace: "normal", minWidth: 160 }}>{t.note ?? <span className="faint">—</span>}</td>
                       <td className="r">
                         <div className="row" style={{ justifyContent: "flex-end", flexWrap: "nowrap" }}>
-                          <button className="btn btn-sm" onClick={() => onEdit(t)}>Modifier</button>
-                          <button className="btn btn-sm btn-danger" onClick={() => remove(t)}>Supprimer</button>
+                          <button className="btn btn-sm" onClick={() => onEdit(t)}>Edit</button>
+                          <button className="btn btn-sm btn-danger" onClick={() => remove(t)}>Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -116,7 +116,7 @@ export default function Movements({ j, onEdit }: { j: Journal; onEdit: (t: Trans
               </tbody>
             </table>
             {!j.filteredTx.length && (
-              <div className="empty">Aucun retrait ni dépôt. Clique sur « + Retrait / Dépôt » pour en ajouter un.</div>
+              <div className="empty">No withdrawals or deposits yet. Click “+ Withdrawal / Deposit” to add one.</div>
             )}
           </div>
         )}

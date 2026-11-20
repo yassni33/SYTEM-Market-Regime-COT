@@ -18,12 +18,12 @@ const Icon = ({ d }: { d: React.ReactNode }) => (
 
 const LINKS: { href: string; label: string; icon?: React.ReactNode; sub?: boolean; group?: string }[] = [
   { href: "/", label: "Market Regime & COT", icon: I.chart },
-  { href: "/news", label: "Calendrier des news", icon: I.cal },
+  { href: "/news", label: "News calendar", icon: I.cal },
   { href: "/journal", label: "Dashboard", icon: I.book, group: "Journal" },
-  { href: "/journal/calendrier", label: "Calendrier P&L", sub: true },
-  { href: "/journal/trades", label: "Liste des trades", sub: true },
-  { href: "/strategie", label: "Stratégie ACR", icon: I.target, group: "Outils" },
-  { href: "/risque", label: "Calculateur de risque", icon: I.calc },
+  { href: "/journal/calendrier", label: "P&L calendar", sub: true },
+  { href: "/journal/trades", label: "Trade list", sub: true },
+  { href: "/strategie", label: "ACR strategy", icon: I.target, group: "Tools" },
+  { href: "/risque", label: "Risk calculator", icon: I.calc },
 ];
 
 export default function Sidebar() {
@@ -33,15 +33,15 @@ export default function Sidebar() {
       <div className="brand">
         <div className="brand-mark">
           <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M5 22l7-7 5 5 10-11" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5 22l7-7 5 5 10-11" fill="none" stroke="var(--on-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
         <div>
           <BrandName />
-          <div className="brand-sub">Espace de trading personnel</div>
+          <div className="brand-sub">Personal trading desk</div>
         </div>
       </div>
-      <nav className="nav" aria-label="Menu principal">
+      <nav className="nav" aria-label="Main menu">
         {LINKS.map((l) => (
           <div key={l.href} style={{ display: "contents" }}>
             {l.group && <div className="nav-group label">{l.group}</div>}
@@ -58,10 +58,10 @@ export default function Sidebar() {
       </nav>
       <div className="sidebar-foot stack" style={{ gap: 10 }}>
         <p className="small muted">
-          Un filtre pour ton analyse, pas un signal pour trader à l’aveugle.
+          A filter for your analysis, not a signal to trade blindly.
         </p>
         <form action="/auth/signout" method="post">
-          <button className="btn btn-sm" style={{ width: "100%" }}>Se déconnecter</button>
+          <button className="btn btn-sm" style={{ width: "100%" }}>Sign out</button>
         </form>
       </div>
     </aside>
