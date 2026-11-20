@@ -1,4 +1,5 @@
 "use client";
+import BrandName from "@/components/BrandName";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -36,7 +37,7 @@ export default function Sidebar() {
           </svg>
         </div>
         <div>
-          <div className="brand-name">Yassni Trading Hub</div>
+          <BrandName />
           <div className="brand-sub">Espace de trading personnel</div>
         </div>
       </div>

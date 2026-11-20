@@ -16,7 +16,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yassni Trading Hub",
+  title: { default: "YASSNI.edge", template: "%s · YASSNI.edge" },
+  applicationName: "YASSNI.edge",
+  appleWebApp: { capable: true, title: "YASSNI.edge", statusBarStyle: "default" },
   description: "Espace de trading personnel : régime de marché, COT, journal et outils.",
   robots: { index: false, follow: false },
 };

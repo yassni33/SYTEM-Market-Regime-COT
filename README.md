@@ -1,4 +1,4 @@
-# Yassni Trading Hub
+# YASSNI.edge
 
 Ton espace de trading personnel : Market Regime & COT, calendrier des news, journal, stratégie ACR et calculateur de risque.
 

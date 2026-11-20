@@ -1,4 +1,4 @@
-// Définition des marchés suivis par le Trading Hub.
+// Définition des marchés suivis par YASSNI.edge.
 
 export const CURRENCIES = ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"] as const;
 export type Currency = (typeof CURRENCIES)[number];

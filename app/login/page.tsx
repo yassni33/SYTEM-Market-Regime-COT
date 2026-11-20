@@ -1,4 +1,5 @@
 "use client";
+import BrandName from "@/components/BrandName";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -36,7 +37,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <div>
-              <div className="brand-name">Yassni Trading Hub</div>
+              <BrandName />
               <div className="brand-sub">Espace privé</div>
             </div>
           </div>

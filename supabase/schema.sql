@@ -1,4 +1,4 @@
--- Yassni Trading Hub : à coller en une fois dans Supabase > SQL Editor > New query > Run.
+-- YASSNI.edge : à coller en une fois dans Supabase > SQL Editor > New query > Run.
 -- Le script peut être relancé sans danger.
 
 -- 1) Cache des données de marché (prix Yahoo, COT, calendrier) partagé PC / téléphone
