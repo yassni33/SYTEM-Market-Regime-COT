@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { ACR_PINE } from "@/lib/acrPine";
+
+// Placeholder used before the real indicator was added: a saved page still holding it gets the real code.
+const OLD_PLACEHOLDER = "// Colle ici le code Pine Script";
 
 type BacktestRow = { periode: string; marche: string; trades: string; gagnants: string; rr: string; resultat: string };
 type Content = {
@@ -51,7 +55,7 @@ const DEFAULT: Content = {
     { periode: "2023-2024", marche: "EURUSD", trades: "473", gagnants: "246", rr: "1:1", resultat: "−6.5 R" },
     { periode: "2023-2024", marche: "GBPUSD", trades: "480", gagnants: "230", rr: "1:1", resultat: "−36 R" },
   ],
-  code: "// Colle ici le code Pine Script de ton indicateur ACR pour TradingView.\n//@version=5\nindicator(\"ACR\", overlay = true)\n",
+  code: ACR_PINE,
   checklist: [
     "Daily trend set: I only trade in its direction",
     "Asia range (20:00–00:00 NY) drawn: high and low marked",
@@ -79,7 +83,11 @@ export default function StrategyPage() {
       .select("content")
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.content && Object.keys(data.content).length) setC({ ...DEFAULT, ...(data.content as Content) });
+        if (data?.content && Object.keys(data.content).length) {
+          const saved = data.content as Content;
+          const code = !saved.code || saved.code.startsWith(OLD_PLACEHOLDER) ? ACR_PINE : saved.code;
+          setC({ ...DEFAULT, ...saved, code });
+        }
       });
   }, []);
 
