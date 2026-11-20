@@ -1,16 +1,48 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AccountSelect } from "@/components/journal/AccountBar";
+import Movements from "@/components/journal/Movements";
 import TradeForm from "@/components/journal/TradeForm";
+import TransactionForm from "@/components/journal/TransactionForm";
 import { useJournal } from "@/components/journal/useJournal";
 import { BarChart, HBars, LineChart, Radar, SERIES } from "@/components/charts";
-import { computeStats } from "@/lib/journal";
-import { compact, dateFr, money, num, signedMoney } from "@/lib/format";
+import { computeCashflow, computeStats, isOutflow, TX_TYPES, type Transaction } from "@/lib/journal";
+import { compact, dateFr, money, num, pct, signedMoney } from "@/lib/format";
+
+type Tab = "dashboard" | "mouvements";
 
 export default function JournalDashboard() {
   const j = useJournal();
   const [adding, setAdding] = useState(false);
+  const [txForm, setTxForm] = useState<Transaction | "new" | null>(null);
+  const [tab, setTabState] = useState<Tab>("dashboard");
+  // Les stats ne voient que les trades : les retraits et dépôts n'y entrent jamais.
   const s = useMemo(() => computeStats(j.filtered, j.initialBalance), [j.filtered, j.initialBalance]);
+  const cash = useMemo(() => computeCashflow(j.initialBalance, j.filtered, j.filteredTx), [j.initialBalance, j.filtered, j.filteredTx]);
+
+  // Onglet gardé dans l'adresse (#mouvements) pour pouvoir y revenir directement
+  useEffect(() => {
+    const read = () => setTabState(window.location.hash === "#mouvements" ? "mouvements" : "dashboard");
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    history.replaceState(null, "", t === "mouvements" ? "#mouvements" : window.location.pathname);
+  };
+
+  // Retraits et payouts posés sur la courbe d'équité, au dernier point avant leur date
+  const markers = useMemo(() => {
+    const labels = s.equity.map((e) => e.label);
+    return j.filteredTx.filter(isOutflow).map((t) => {
+      let index = 0;
+      for (let i = 0; i < labels.length; i++) if (labels[i] <= t.date) index = i;
+      const acc = j.accounts.find((a) => a.id === t.account_id);
+      return { index, label: `${TX_TYPES[t.type]} ${money(-t.amount, acc?.currency ?? ccy)} le ${dateFr(t.date, { day: "numeric", month: "short" })}` };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.equity, j.filteredTx, j.accounts]);
   const ccy = j.currency;
   const setups = [...new Set(j.trades.map((t) => t.setup).filter(Boolean) as string[])];
   const lastDays = s.days.slice(-30);
@@ -22,6 +54,25 @@ export default function JournalDashboard() {
     { label: "% jours gagnants", value: `${num(s.dayWinRate, 1)} %`, sub: `${s.days.length} jours tradés` },
     { label: "Gain moyen / perte moyenne", value: isFinite(s.winLossRatio) ? num(s.winLossRatio, 2) : "∞", sub: `${money(s.avgWin, ccy)} / ${money(s.avgLoss, ccy)}` },
     { label: "Espérance par trade", value: signedMoney(s.expectancy, ccy), tone: s.expectancy >= 0 ? "up" : "down" },
+    {
+      label: "Solde actuel",
+      value: money(cash.balance, ccy),
+      sub: `Départ ${money(cash.initial, ccy, 0)}${cash.deposits ? ` · dépôts ${money(cash.deposits, ccy, 0)}` : ""}`,
+    },
+    {
+      label: "Total retiré",
+      value: money(cash.totalWithdrawn, ccy),
+      tone: cash.totalWithdrawn > 0 ? "up" : undefined,
+      sub: cash.totalWithdrawn
+        ? `Retraits ${money(cash.withdrawals, ccy, 0)} · payouts ${money(cash.payouts, ccy, 0)}`
+        : "Ce que tu as vraiment encaissé",
+    },
+    {
+      label: "% de rendement",
+      value: pct(cash.returnPct),
+      tone: (cash.returnPct ?? 0) >= 0 ? "up" : "down",
+      sub: "P&L des trades ÷ (départ + dépôts)",
+    },
   ];
 
   return (
@@ -33,8 +84,18 @@ export default function JournalDashboard() {
         </div>
         <div className="row">
           <AccountSelect j={j} />
+          <button className="btn" onClick={() => setTxForm("new")}>+ Retrait / Dépôt</button>
           <button className="btn btn-primary" onClick={() => setAdding(true)}>+ Ajouter un trade</button>
         </div>
+      </div>
+
+      <div className="seg" role="tablist" aria-label="Vue du journal" style={{ alignSelf: "flex-start" }}>
+        <button role="tab" aria-selected={tab === "dashboard"} className={tab === "dashboard" ? "on" : ""} onClick={() => setTab("dashboard")}>
+          Tableau de bord
+        </button>
+        <button role="tab" aria-selected={tab === "mouvements"} className={tab === "mouvements" ? "on" : ""} onClick={() => setTab("mouvements")}>
+          Mouvements{j.filteredTx.length ? ` (${j.filteredTx.length})` : ""}
+        </button>
       </div>
 
       {j.error && <div className="notice err">{j.error}</div>}
@@ -42,6 +103,10 @@ export default function JournalDashboard() {
         <div className="notice ok">Bienvenue ! Commence par créer un compte (bouton « Comptes »), puis ajoute ton premier trade.</div>
       )}
 
+      {tab === "mouvements" ? (
+        <Movements j={j} onEdit={(t) => setTxForm(t)} />
+      ) : (
+      <>
       <div className="grid g3">
         {kpis.map((k) => (
           <div key={k.label} className="card card-b">
@@ -79,7 +144,7 @@ export default function JournalDashboard() {
           <div className="card-h">
             <div>
               <h2>Courbe d’équité</h2>
-              <p>Solde après chaque trade · drawdown max {money(s.maxDD, ccy)} ({num(s.maxDDPct, 1)} %)</p>
+              <p>Solde de départ + P&L des trades · drawdown max {money(s.maxDD, ccy)} ({num(s.maxDDPct, 1)} %)</p>
             </div>
           </div>
           <div className="card-b">
@@ -91,7 +156,13 @@ export default function JournalDashboard() {
               zeroLine={false}
               area
               height={280}
+              markers={markers}
             />
+            {markers.length > 0 && (
+              <div className="small muted" style={{ marginTop: 6 }}>
+                <span style={{ color: "var(--text)", fontSize: 10 }}>▼</span> Retrait ou payout ({markers.length}). La courbe ne descend pas : ces sorties ne sont pas des pertes.
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -128,6 +199,21 @@ export default function JournalDashboard() {
           </div>
         </section>
       </div>
+      </>
+      )}
+
+      {txForm && (
+        <TransactionForm
+          accounts={j.accounts}
+          tx={txForm === "new" ? null : txForm}
+          defaultAccountId={j.accountId}
+          onClose={() => setTxForm(null)}
+          onSaved={() => {
+            setTxForm(null);
+            j.reload();
+          }}
+        />
+      )}
 
       {adding && (
         <TradeForm
